@@ -30,4 +30,20 @@
         <script src="{{ url_for('static', filename='resond.min.js') }}"></script>
     <![endif]-->
 
+<body>
 {% block body %}{% endblock %}
+
+    <!-- jQuery -->
+    <script src="{{ url_for('static', filename='jquery.js') }}"></script>
+
+    <!-- Bootstrap Core JavaScript -->
+    <script src="{{ url_for('static', filename='bootstrap.min.js') }}"></script>
+
+    <!-- Morris Charts JavaScript -->
+    <script src="{{ url_for('static', filename='raphael.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='morris.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='morris-data.min.js') }}"></script>
+
+</body>
+
+</html>
