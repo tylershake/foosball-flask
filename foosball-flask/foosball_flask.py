@@ -19,13 +19,15 @@ FOOSBALL_APP = flask.Flask(__name__, static_folder='./utils/static',
 #))
 
 @FOOSBALL_APP.route('/')
-def show_entries():
+def index_redirect():
     """docstring"""
 
-#    cursor = FOOSBALL_MYSQL.connection.cursor()
-#    cursor.execute('''SELECT title, text FROM entries ORDER BY id DESC''')
-#    entries = cursor.fetchall()
-#    entries = 'Test Entry'
+    return flask.render_template('dashboard.html')
+
+@FOOSBALL_APP.route('/index.html')
+def index():
+    """docstring"""
+
     return flask.render_template('dashboard.html')
 
 #@FOOSBALL_APP.route('/login', methods=['GET', 'POST'])
