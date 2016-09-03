@@ -30,6 +30,12 @@ def index():
 
     return flask.render_template('dashboard.html')
 
+@FOOSBALL_APP.route('/result.html')
+def result():
+    """docstring"""
+
+    return flask.render_template('result.html')
+
 #@FOOSBALL_APP.route('/login', methods=['GET', 'POST'])
 #def login():
 #    """docstring"""
