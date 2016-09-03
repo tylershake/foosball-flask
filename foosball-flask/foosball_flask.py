@@ -8,7 +8,8 @@ algorithm.
 import flask
 #import flask_mysql
 
-FOOSBALL_APP = flask.Flask(__name__)
+FOOSBALL_APP = flask.Flask(__name__, static_folder='./utils/static',
+    template_folder='./utils/templates')
 #FOOSBALL_MYSQL = flask_mysql.MySQL(FOOSBALL_APP)
 
 #FOOSBALL_APP.config.update(dict(
@@ -48,3 +49,11 @@ def show_entries():
 #    flask.session.pop('logged_in', None)
 #    flask.flash('You were logged out')
 #    return flask.redirect(flask.url_for('show_entries'))
+
+def main():
+    """docstring"""
+
+    FOOSBALL_APP.run(port=11111)
+
+if __name__ == '__main__':
+    main()
