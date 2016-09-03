@@ -48,6 +48,24 @@ def team():
 
     return flask.render_template('team.html')
 
+@FOOSBALL_APP.route('/addteam.html')
+def add_team():
+    """docstring"""
+
+    return flask.render_template('addteam.html')
+
+@FOOSBALL_APP.route('/addplayer.html')
+def add_player():
+    """docstring"""
+
+    return flask.render_template('addplayer.html')
+
+@FOOSBALL_APP.route('/addresult.html')
+def add_result():
+    """docstring"""
+
+    return flask.render_template('addresult.html')
+
 #@FOOSBALL_APP.route('/login', methods=['GET', 'POST'])
 #def login():
 #    """docstring"""
