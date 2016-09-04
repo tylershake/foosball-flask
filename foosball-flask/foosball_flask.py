@@ -91,7 +91,7 @@ def add_result():
 def main():
     """docstring"""
 
-    FOOSBALL_APP.run(port=11111)
+    FOOSBALL_APP.run(port=11111, host='0.0.0.0')
 
 if __name__ == '__main__':
     main()
