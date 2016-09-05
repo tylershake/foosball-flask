@@ -130,17 +130,73 @@ to MySQL server")
         else:
             pass
 
+    def delete_player(self, first_name, last_name, nickname):
+        """Method to delete a player from the database
+
+        Args:
+            first_name (str):   player first name
+            last_name(str):     player last name
+            nickname (str):     player nickname
+
+        Raises:
+            data_manager_exceptions.DBValueError
+            data_manager_exceptions.DBExistError
+            data_manager_exceptions.DBConnectionError
+            data_manager_exceptions.DBSyntaxError
+
+        """
+
+        if len(first_name) is 0:
+            raise data_manager_exceptions.DBValueError("First name must be at \
+least one character")
+
+        if len(last_name) is 0:
+            raise data_manager_exceptions.DBValueError("Last name must be at \
+least one character")
+
+        try:
+            LOGGER.info("Checking that player already exists")
+            LOGGER.debug("Player parameters:\n\
+first name: %s\n\
+last name: %s\n\
+nickname: %s", first_name, last_name, nickname)
+            cursor = self.db_conn.cursor()
+            cursor.execute("SELECT player_id, first_name, last_name, \
+nickname FROM player")
+            players = cursor.fetchall()
+
+            if len(players) is 0:
+                raise data_manager_exceptions.DBExistError("No players \
+in database to delete")
+
+            for player in players:
+                player_id, existing_first_name, existing_last_name, \
+                    existing_nickname = player
+            
+                if (first_name == existing_first_name) and (last_name == 
+                    existing_last_name) and (nickname == existing_nickname):
+                    LOGGER.info("Deleting player from database")
+                    cursor.execute("DELETE FROM player WHERE player_id = %s",
+                        (player_id, ))
+                else:
+                    raise data_manager_exceptions.DBExistError("Player \
+doesn't exist")
+        except MySQLdb.OperationalError:
+            LOGGER.error("Cannot connect to MySQL server")
+            raise data_manager_exceptions.DBConnectionError("Cannot connect \
+to MySQL server")
+        except MySQLdb.ProgrammingError:
+            LOGGER.error("MySQL syntax error")
+            raise data_manager_exceptions.DBSyntaxError("MySQL syntax error")
+        else:
+            pass
+            
     def add_team(self, team_name, first_member, second_member):
         """docstring"""
 
         cursor = self.db_conn.cursor()
 
     def add_result(self, offense_winner, defense_winner, offense_loser, defense_loser):
-        """docstring"""
-
-        cursor = self.db_conn.cursor()
-
-    def delete_player(self, first_name, last_name, nickname):
         """docstring"""
 
         cursor = self.db_conn.cursor()
@@ -181,7 +237,9 @@ def main():
 
     data_mgr = DataManager('root', '', '127.0.0.1',
         'new_schema')
-    data_mgr.add_player('Tyler', 'Shake', 'Shake')
+    data_mgr.add_player('Tyler', 'Tyler', 'Shake')
+    data_mgr.commit_data()
+    data_mgr.delete_player('Tyler', 'Shake', 'Shake')
     data_mgr.commit_data()
     del data_mgr
 
