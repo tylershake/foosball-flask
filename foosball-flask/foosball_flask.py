@@ -37,8 +37,8 @@ FOOSBALL_APP.config['DEBUG'] = True
 #    PASSWORD='default'
 #))
 
-FOOSBALL_DATA = data_manager.DataManager(db_user='foosball',
-    db_pass='foosball', db_host='127.0.0.1', db_name='foosball')
+FOOSBALL_DATA = data_manager.DataManager(db_user='root',
+    db_pass='', db_host='127.0.0.1', db_name='new_schema')
 
 @FOOSBALL_APP.route('/')
 def index_redirect():
@@ -88,6 +88,7 @@ def add_player():
         try:
             FOOSBALL_DATA.add_player(first_name=first_name,
                 last_name=last_name, nickname=nickname)
+            FOOSBALL_DATA.commit_data()
         except data_manager_exceptions.DBValueError as error:
             LOGGER.error(error.msg)
             #TODO display warning
