@@ -91,21 +91,21 @@ def add_player():
             FOOSBALL_DATA.commit_data()
         except data_manager_exceptions.DBValueError as error:
             LOGGER.error(error.msg)
-            #TODO display warning
+            return flask.render_template('addplayer.html', error=error)
         except data_manager_exceptions.DBSyntaxError as error:
             LOGGER.error(error.msg)
-            #TODO display warning
+            return flask.render_template('addplayer.html', error=error)
         except data_manager_exceptions.DBConnectionError as error:
             LOGGER.error(error.msg)
-            #TODO display warning
+            return flask.render_template('addplayer.html', error=error)
         except data_manager_exceptions.DBExistError as error:
             LOGGER.error(error.msg)
-            #TODO display warning
+            return flask.render_template('addplayer.html', error=error)
         else:
             pass
 
-        #TODO display success
-        return flask.render_template('player.html')
+        message = 'Player successfully added'
+        return flask.render_template('player.html', message=message)
     elif flask.request.method == 'GET':
         return flask.render_template('addplayer.html')
     else:
