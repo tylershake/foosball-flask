@@ -84,16 +84,51 @@ to MySQL server")
             nickname (str):     player nickname
 
         Raises:
+            data_manager_exceptions.DBValueError
+            data_manager_exceptions.DBExistError
+            data_manager_exceptions.DBConnectionError
+            data_manager_exceptions.DBSyntaxError
 
         """
 
-        cursor = self.db_conn.cursor()
+        if len(first_name) is 0:
+            raise data_manager_exceptions.DBValueError("First name must be at \
+least one character")
 
-        #TODO perform checks
-        #TODO check if player already exists
+        if len(last_name) is 0:
+            raise data_manager_exceptions.DBValueError("Last name must be at \
+least one character")
+
+        try:
+            LOGGER.info("Checking if player already exists")
+            LOGGER.debug("Player parameters:\n\
+first name: %s\n\
+last name: %s\n\
+nickname: %s", first_name, last_name, nickname)
+            cursor = self.db_conn.cursor()
+            cursor.execute("SELECT first_name, last_name, nickname FROM player")
+            players = cursor.fetchall()
+            for player in players:
+                existing_first_name, existing_last_name, existing_nickname = \
+                    player
+            
+                if (first_name == existing_first_name) and (last_name == 
+                    existing_last_name) and (nickname == existing_nickname):
+                    raise data_manager_exceptions.DBExistError("Player already \
+exists")
         
-        cursor.execute("INSERT INTO player (first_name, last_name, nickname) \
-VALUES (%s, %s, %s)", (first_name, last_name, nickname))
+            LOGGER.info("Adding player to database")
+            cursor.execute("INSERT INTO player (first_name, last_name, \
+nickname) VALUES (%s, %s, %s)", (first_name, last_name, nickname))
+        except MySQLdb.OperationalError:
+            LOGGER.error("Cannot connect to MySQL server")
+            raise data_manager_exceptions.DBConnectionError("Cannot connect \
+to MySQL server")
+        except MySQLdb.ProgrammingError:
+            LOGGER.error("MySQL syntax error")
+            raise data_manager_exceptions.DBSyntaxError("MySQL syntax error")
+        else:
+            pass
 
     def add_team(self, team_name, first_member, second_member):
         """docstring"""
