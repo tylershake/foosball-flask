@@ -190,7 +190,38 @@ to MySQL server")
             raise data_manager_exceptions.DBSyntaxError("MySQL syntax error")
         else:
             pass
-            
+
+    def get_all_players(self):
+        """Method to get all players from database
+
+        Args:
+            None
+
+        Raises:
+            data_manager_exceptions.DBConnectionError
+            data_manager_exceptions.DBSyntaxError
+
+        """
+
+        try:
+            LOGGER.info("Getting player list")
+            cursor = self.db_conn.cursor()
+            cursor.execute("SELECT first_name, last_name, nickname FROM player \
+ORDER BY time DESC")
+            players = cursor.fetchall()
+
+        except MySQLdb.OperationalError:
+            LOGGER.error("Cannot connect to MySQL server")
+            raise data_manager_exceptions.DBConnectionError("Cannot connect \
+to MySQL server")
+        except MySQLdb.ProgrammingError:
+            LOGGER.error("MySQL syntax error")
+            raise data_manager_exceptions.DBSyntaxError("MySQL syntax error")
+        else:
+            pass
+
+        return players
+
     def add_team(self, team_name, first_member, second_member):
         """docstring"""
 
@@ -207,11 +238,6 @@ to MySQL server")
         cursor = self.db_conn.cursor()
 
     def delete_result(self, offense_winner, defense_winner, offense_loser, defense_loser, timestamp):
-        """docstring"""
-
-        cursor = self.db_conn.cursor()
-
-    def total_players(self):
         """docstring"""
 
         cursor = self.db_conn.cursor()

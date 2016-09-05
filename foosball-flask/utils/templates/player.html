@@ -69,20 +69,6 @@
 
                 {% endif %}
 
-                {% if error %}
-
-                <div class="row">
-                    <div class="col-lg-6">
-                        <div class="alert alert-danger alert-dismissable">
-                            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-                                {{ error }}
-                        </div>
-                    </div>
-                </div>
-                <!-- /.row -->
-
-                {% endif %}
-
                 <div class="row">
                     <div class="col-lg-12">
                         <a class="btn btn-primary" href="{{ url_for('add_player') }}" type="button">
@@ -111,21 +97,13 @@
                                             </tr>
                                         </thead>
                                         <tbody>
+                                            {% for first_name, last_name, nickname in players %}
                                             <tr>
-                                                <td>Test Name</td>
-                                                <td>Test Name</td>
-                                                <td>Test Name</td>
+                                                <td>{{ first_name }}</td>
+                                                <td>{{ last_name }}</td>
+                                                <td>{{ nickname }}</td>
                                             </tr>
-                                            <tr>
-                                                <td>Test Name</td>
-                                                <td>Test Name</td>
-                                                <td>Test Name</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Test Name</td>
-                                                <td>Test Name</td>
-                                                <td>Test Name</td>
-                                            </tr>
+                                            {% endfor %}
                                         </tbody>
                                     </table>
                                 </div>

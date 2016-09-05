@@ -62,7 +62,9 @@ def result():
 def player():
     """docstring"""
 
-    return flask.render_template('player.html')
+    players = FOOSBALL_DATA.get_all_players()
+
+    return flask.render_template('player.html', players=players)
 
 @FOOSBALL_APP.route('/team.html')
 def team():
@@ -105,7 +107,9 @@ def add_player():
             pass
 
         message = 'Player successfully added'
-        return flask.render_template('player.html', message=message)
+        players = FOOSBALL_DATA.get_all_players()
+        return flask.render_template('player.html', message=message,
+            players=players)
     elif flask.request.method == 'GET':
         return flask.render_template('addplayer.html')
     else:
