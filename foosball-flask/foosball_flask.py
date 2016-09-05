@@ -117,6 +117,42 @@ def add_player():
     else:
         raise foosball_exceptions.HTTPError("Received unrecognized HTTP method")
 
+@FOOSBALL_APP.route('/delplayer', methods=['GET'])
+def del_player():
+    """docstring"""
+
+    if flask.request.method == 'GET':
+        first_name = flask.request.args.get('first_name').encode('utf-8')
+        last_name = flask.request.args.get('last_name').encode('utf-8')
+        nickname = flask.request.args.get('nickname').encode('utf-8')
+
+        try:
+            FOOSBALL_DATA.delete_player(first_name=first_name,
+                last_name=last_name, nickname=nickname)
+            FOOSBALL_DATA.commit_data()
+        except data_manager_exceptions.DBValueError as error:
+            LOGGER.error(error.msg)
+            return flask.render_template('player.html', error=error)
+        except data_manager_exceptions.DBSyntaxError as error:
+            LOGGER.error(error.msg)
+            return flask.render_template('player.html', error=error)
+        except data_manager_exceptions.DBConnectionError as error:
+            LOGGER.error(error.msg)
+            return flask.render_template('player.html', error=error)
+        except data_manager_exceptions.DBExistError as error:
+            LOGGER.error(error.msg)
+            return flask.render_template('player.html', error=error)
+        else:
+            pass
+
+        message = 'Player successfully deleted'
+        players = FOOSBALL_DATA.get_all_players()
+        return flask.render_template('player.html', message=message,
+            players=players)
+
+    else:
+        raise foosball_exceptions.HTTPError("Received unrecognized HTTP method")
+
 @FOOSBALL_APP.route('/addresult.html')
 def add_result():
     """docstring"""

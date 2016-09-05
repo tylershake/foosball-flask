@@ -146,6 +146,8 @@ to MySQL server")
 
         """
 
+        #TODO check if data exists and don't delete if it does
+
         if len(first_name) is 0:
             raise data_manager_exceptions.DBValueError("First name must be at \
 least one character")
@@ -178,8 +180,11 @@ in database to delete")
                     LOGGER.info("Deleting player from database")
                     cursor.execute("DELETE FROM player WHERE player_id = %s",
                         (player_id, ))
+                    return
                 else:
-                    raise data_manager_exceptions.DBExistError("Player \
+                    continue
+
+            raise data_manager_exceptions.DBExistError("Player \
 doesn't exist")
         except MySQLdb.OperationalError:
             LOGGER.error("Cannot connect to MySQL server")
