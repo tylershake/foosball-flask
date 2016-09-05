@@ -57,18 +57,18 @@
 
                 <div class="row">
                     <div class="col-lg-4">
-                        <form class="form">
+                        <form action="{{ url_for('add_player') }}" method="POST" class="form">
                             <div class="form-group">
-                                <label for="input_first_name">First Name</label>
-                                <input type="text" class="form-control" id="input_first_name" placeholder="First">
+                                <label for="first_name">First Name</label>
+                                <input type="text" class="form-control" id="first_name" name="first_name" placeholder="First">
                             </div>
                             <div class="form-group">
-                                <label for="input_last_name">Last Name</label>
-                                <input type="text" class="form-control" id="input_last_name" placeholder="Last">
+                                <label for="last_name">Last Name</label>
+                                <input type="text" class="form-control" id="last_name" name="last_name" placeholder="Last">
                             </div>
                             <div class="form-group">
-                                <label for="input_nickname">Nickname (Optional)</label>
-                                <input type="text" class="form-control" id="input_nickname">
+                                <label for="nickname">Nickname (Optional)</label>
+                                <input type="text" class="form-control" id="nickname" name="nickname">
                             </div>
                             <button type="submit" class="btn btn-primary">Submit</button>
                         </form>
