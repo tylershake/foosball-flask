@@ -50,7 +50,9 @@ def index_redirect():
 def index():
     """docstring"""
 
-    return flask.render_template('dashboard.html')
+    player_count = FOOSBALL_DATA.get_total_players()
+
+    return flask.render_template('dashboard.html', player_count=player_count)
 
 @FOOSBALL_APP.route('/result.html')
 def result():

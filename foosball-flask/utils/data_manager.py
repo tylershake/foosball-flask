@@ -222,6 +222,36 @@ to MySQL server")
 
         return players
 
+    def get_total_players(self):
+        """Method to get player count from database
+
+        Args:
+            None
+
+        Raises:
+            data_manager_exceptions.DBConnectionError
+            data_manager_exceptions.DBSyntaxError
+
+        """
+
+        try:
+            LOGGER.info("Getting total player count")
+            cursor = self.db_conn.cursor()
+            cursor.execute("SELECT COUNT(player_id) FROM player")
+            count = cursor.fetchone()[0]
+
+        except MySQLdb.OperationalError:
+            LOGGER.error("Cannot connect to MySQL server")
+            raise data_manager_exceptions.DBConnectionError("Cannot connect \
+to MySQL server")
+        except MySQLdb.ProgrammingError:
+            LOGGER.error("MySQL syntax error")
+            raise data_manager_exceptions.DBSyntaxError("MySQL syntax error")
+        else:
+            pass
+
+        return count
+
     def add_team(self, team_name, first_member, second_member):
         """docstring"""
 
