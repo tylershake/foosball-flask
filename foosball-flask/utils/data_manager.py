@@ -296,7 +296,7 @@ to MySQL server")
 def main():
     """docstring"""
 
-    data_mgr = DataManager('root', '', '127.0.0.1',
+    data_mgr = DataManager('foosball', 'foosball', '127.0.0.1',
         'new_schema')
     data_mgr.add_player('Tyler', 'Tyler', 'Shake')
     data_mgr.commit_data()

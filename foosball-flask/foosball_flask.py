@@ -10,7 +10,6 @@ import logging
 import logging.config
 import traceback
 import sys
-#import flask_mysql
 
 import utils.data_manager as data_manager
 import utils.data_manager_exceptions as data_manager_exceptions
@@ -28,61 +27,119 @@ else:
 
 FOOSBALL_APP = flask.Flask(__name__, static_folder='./utils/static',
     template_folder='./utils/templates')
-#FOOSBALL_MYSQL = flask_mysql.MySQL(FOOSBALL_APP)
 
 FOOSBALL_APP.config['DEBUG'] = True
-#FOOSBALL_APP.config.update(dict(
-#    SECRET_KEY='development key',
-#    USERNAME='admin',
-#    PASSWORD='default'
-#))
 
-FOOSBALL_DATA = data_manager.DataManager(db_user='root',
-    db_pass='', db_host='127.0.0.1', db_name='new_schema')
+FOOSBALL_DATA = data_manager.DataManager(db_user='foosball',
+    db_pass='foosball', db_host='127.0.0.1', db_name='foosball')
 
 @FOOSBALL_APP.route('/')
 def index_redirect():
-    """docstring"""
+    """Main entry point to webpage
 
-    return flask.render_template('dashboard.html')
+    Args:
+        None
 
-@FOOSBALL_APP.route('/index.html')
-def index():
-    """docstring"""
+    Returns:
+        display dashboard
+
+    """
 
     player_count = FOOSBALL_DATA.get_total_players()
 
     return flask.render_template('dashboard.html', player_count=player_count)
 
-@FOOSBALL_APP.route('/result.html')
+@FOOSBALL_APP.route('/index')
+def index():
+    """Dashboard webpage
+
+    Args:
+        None
+
+    Returns:
+        display dashboard
+
+    """
+
+    player_count = FOOSBALL_DATA.get_total_players()
+
+    return flask.render_template('dashboard.html', player_count=player_count)
+
+@FOOSBALL_APP.route('/result')
 def result():
-    """docstring"""
+    """Results webpage
+
+    Args:
+        None
+
+    Returns:
+        display results
+
+    """
 
     return flask.render_template('result.html')
 
-@FOOSBALL_APP.route('/player.html')
+@FOOSBALL_APP.route('/player')
 def player():
-    """docstring"""
+    """Players webpage
+
+    Args:
+        None
+
+    Returns:
+        display players
+
+    """
 
     players = FOOSBALL_DATA.get_all_players()
 
     return flask.render_template('player.html', players=players)
 
-@FOOSBALL_APP.route('/team.html')
+@FOOSBALL_APP.route('/team')
 def team():
-    """docstring"""
+    """Team webpage
+
+    Args:
+        None
+
+    Returns:
+        display teams
+
+    """
 
     return flask.render_template('team.html')
 
-@FOOSBALL_APP.route('/addteam.html')
+@FOOSBALL_APP.route('/addteam')
 def add_team():
-    """docstring"""
+    """Add Team webpage
+
+    Args:
+        None
+
+    Returns:
+        display add team
+
+    """
 
     return flask.render_template('addteam.html')
 
 @FOOSBALL_APP.route('/addplayer', methods=['GET', 'POST'])
 def add_player():
-    """docstring"""
+    """Add Player webpage
+
+    Args:
+        first_name (str):   player first name
+        last_name (str):    player last name
+        nickname (str):     player nickname
+
+    Returns:
+        display add player
+        display player
+
+    Raises:
+        foosball_exceptions.HTTPError
+
+    """
 
     if flask.request.method == 'POST':
         first_name = flask.request.form['first_name']
@@ -119,7 +176,20 @@ def add_player():
 
 @FOOSBALL_APP.route('/delplayer', methods=['GET'])
 def del_player():
-    """docstring"""
+    """Delete player webpage
+
+    Args:
+        first_name (str):   player first name
+        last_name (str):    player last name
+        nickname (str):     player nickname
+
+    Returns:
+        display player
+
+    Raises:
+        foosball_exceptions.HTTPError
+
+    """
 
     if flask.request.method == 'GET':
         first_name = flask.request.args.get('first_name').encode('utf-8')
@@ -153,36 +223,58 @@ def del_player():
     else:
         raise foosball_exceptions.HTTPError("Received unrecognized HTTP method")
 
-@FOOSBALL_APP.route('/addresult.html')
+@FOOSBALL_APP.route('/addresult')
 def add_result():
-    """docstring"""
+    """Add Result webpage
+
+    Args:
+        None
+
+    Returns:
+        display add result
+
+    """
 
     return flask.render_template('addresult.html')
 
-#@FOOSBALL_APP.route('/login', methods=['GET', 'POST'])
-#def login():
-#    """docstring"""
-#    error = None
-#    if flask.request.method == 'POST':
-#        if flask.request.form['username'] != FOOSBALL_APP.config['USERNAME']:
-#            error = 'Invalid username'
-#        elif flask.request.form['password'] != FOOSBALL_APP.config['PASSWORD']:
-#            error = 'Invalid password'
-#        else:
-#            flask.session['logged_in'] = True
-#            flask.flash('You were logged in')
-#            return flask.redirect(flask.url_for('show_entries'))
-#    return flask.render_template('login.html', error=error)
+@FOOSBALL_APP.route('/teamstat')
+def team_stat():
+    """Team Stat webpage
 
-#@FOOSBALL_APP.route('/logout')
-#def logout():
-#    """docstring"""
-#    flask.session.pop('logged_in', None)
-#    flask.flash('You were logged out')
-#    return flask.redirect(flask.url_for('show_entries'))
+    Args:
+        None
+
+    Returns:
+        display dashboard
+
+    """
+
+    return flask.render_template('dashboard.html')
+
+@FOOSBALL_APP.route('/playerstat')
+def player_stat():
+    """Player Stat webpage
+
+    Args:
+        None
+
+    Returns:
+        display dashboard
+
+    """
+
+    return flask.render_template('dashboard.html')
 
 def main():
-    """docstring"""
+    """Main entry point
+
+    Args:
+        None
+
+    Returns:
+        None
+
+    """
 
     FOOSBALL_APP.run(port=11111, host='0.0.0.0')
 

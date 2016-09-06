@@ -12,29 +12,29 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand" href="index.html">Foosball</a>
+                <a class="navbar-brand" href="{{ url_for('index') }}">Foosball</a>
             </div>
             
             <!-- Sidebar Menu Items - These collapse to the responsive navigation menu on small screens -->
             <div class="collapse navbar-collapse navbar-ex1-collapse">
                 <ul class="nav navbar-nav side-nav">
                     <li>
-                        <a href="index.html"><i class="fa fa-fw fa-dashboard"></i> Dashboard</a>
+                        <a href="{{ url_for('index') }}"><i class="fa fa-fw fa-dashboard"></i> Dashboard</a>
                     </li>
                     <li>
-                        <a href="player.html"><i class="fa fa-fw fa-user"></i> Players</a>
+                        <a href="{{ url_for('player') }}"><i class="fa fa-fw fa-user"></i> Players</a>
                     </li>
                     <li class="active">
-                        <a href="team.html"><i class="fa fa-fw fa-users"></i> Teams</a>
+                        <a href="{{ url_for('team') }}"><i class="fa fa-fw fa-users"></i> Teams</a>
                     </li>
                     <li>
-                        <a href="result.html"><i class="fa fa-fw fa-desktop"></i> Results</a>
+                        <a href="{{ url_for('result') }}"><i class="fa fa-fw fa-desktop"></i> Results</a>
                     </li>
                     <li>
-                        <a href="teamstat.html"><i class="fa fa-fw fa-bar-chart-o"></i> Team Statistics</a>
+                        <a href="{{ url_for('team_stat') }}"><i class="fa fa-fw fa-bar-chart-o"></i> Team Statistics</a>
                     </li>
                     <li>
-                        <a href="playerstat.html"><i class="fa fa-fw fa-area-chart"></i> Player Statistics</a>
+                        <a href="{{ url_for('player_stat') }}"><i class="fa fa-fw fa-area-chart"></i> Player Statistics</a>
                     </li>
                 </ul>
             </div>
