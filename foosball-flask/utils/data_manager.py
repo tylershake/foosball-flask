@@ -65,6 +65,15 @@ nickname VARCHAR(45) NULL,\
 time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\
 PRIMARY KEY (player_id),\
 UNIQUE INDEX player_id_UNIQUE (player_id ASC))")
+
+            cursor.execute("CREATE TABLE IF NOT EXISTS team (\
+team_id INT NOT NULL AUTO_INCREMENT,\
+name VARCHAR(75) NOT NULL,\
+time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\
+PRIMARY KEY (team_id),\
+UNIQUE INDEX team_id_UNIQUE (team_id ASC),\
+UNIQUE INDEX name_UNIQUE (name ASC))")
+
         except MySQLdb.OperationalError:
             LOGGER.error("Cannot connect to MySQL server")
             raise data_manager_exceptions.DBConnectionError("Cannot connect \
@@ -243,6 +252,36 @@ to MySQL server")
             LOGGER.info("Getting total player count")
             cursor = self.db_conn.cursor()
             cursor.execute("SELECT COUNT(player_id) FROM player")
+            count = cursor.fetchone()[0]
+
+        except MySQLdb.OperationalError:
+            LOGGER.error("Cannot connect to MySQL server")
+            raise data_manager_exceptions.DBConnectionError("Cannot connect \
+to MySQL server")
+        except MySQLdb.ProgrammingError:
+            LOGGER.error("MySQL syntax error")
+            raise data_manager_exceptions.DBSyntaxError("MySQL syntax error")
+        else:
+            pass
+
+        return count
+
+    def get_total_teams(self):
+        """Method to get team count from database
+
+        Args:
+            None
+
+        Raises:
+            data_manager_exceptions.DBConnectionError
+            data_manager_exceptions.DBSyntaxError
+
+        """
+
+        try:
+            LOGGER.info("Getting total team count")
+            cursor = self.db_conn.cursor()
+            cursor.execute("SELECT COUNT(team_id) FROM team")
             count = cursor.fetchone()[0]
 
         except MySQLdb.OperationalError:
