@@ -144,7 +144,8 @@ exists")
         
             LOGGER.info("Adding player to database")
             cursor.execute("INSERT INTO player (first_name, last_name, \
-nickname) VALUES ({0}, {1}, {2})".format(first_name, last_name, nickname))
+nickname) VALUES ('{0}', '{1}', '{2}')".format(first_name, last_name,
+                nickname))
         except MySQLdb.OperationalError:
             LOGGER.error("Cannot connect to MySQL server")
             raise data_manager_exceptions.DBConnectionError("Cannot connect \
@@ -397,18 +398,21 @@ exists")
             #TODO
 
             LOGGER.info("Adding team to database")
+
             cursor.execute("INSERT INTO team (team_name) VALUES \
-({0})".format(team_name))
+('{0}')".format(team_name))
+
+            team_id = cursor.lastrowid
 
             cursor.execute("INSERT INTO player_team_xref (player, team) \
 VALUES ((SELECT player_id FROM player WHERE first_name = '{0}' AND last_name \
-= '{1}' AND nickname = '{2}'), (SELECT team_id FROM team WHERE team_name = '{3}'\
-))".format(member_one[0], member_one[1], member_one[2], team_name))
+= '{1}' AND nickname = '{2}'), {3})".format(member_one[0], member_one[1],
+                member_one[2], team_id))
 
             cursor.execute("INSERT INTO player_team_xref (player, team) \
 VALUES ((SELECT player_id FROM player WHERE first_name = '{0}' AND last_name \
-= '{1}' AND nickname = '{2}'), (SELECT team_id FROM team WHERE team_name = '{3}'\
-))".format(member_two[0], member_two[1], member_two[2], team_name))
+= '{1}' AND nickname = '{2}'), {3})".format(member_two[0], member_two[1],
+                member_two[2], team_id))
 
         except MySQLdb.OperationalError:
             LOGGER.error("Cannot connect to MySQL server")

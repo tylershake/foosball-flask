@@ -55,31 +55,41 @@
                 </div>
                 <!-- /.row -->
 
+                {% if error %}
+
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="alert alert-danger alert-dismissable">
+                            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+                                {{ error }}
+                        </div>
+                    </div>
+                </div>
+                <!-- /.row -->
+
+                {% endif %}
+
                 <div class="row">
                     <div class="col-lg-4">
-                        <form class="form">
+                        <form action="{{ url_for('add_team') }}" method="POST" class="form">
                             <div class="form-group">
-                                <label for="input_team_name">Team Name</label>
-                                <input type="text" class="form-control" id="input_team_name" placeholder="Example Team">
+                                <label for="team_name">Team Name</label>
+                                <input type="text" class="form-control" id="team_name" name="team_name" placeholder="Example Team">
                             </div>
                             <div class="form-group">
-                                <label for="input_player_one">Player One</label>
-                                <select class="form-control" id="input_player_one">
-                                    <option>Test Name</option>
-                                    <option>Test Name</option>
-                                    <option>Test Name</option>
-                                    <option>Test Name</option>
-                                    <option>Test Name</option>
+                                <label for="member_one">Player One</label>
+                                <select class="form-control" id="member_one" name="member_one">
+                                    {% for first_name, last_name, nickname in players %}
+                                    <option>{{ first_name }} "{{ nickname }}" {{ last_name }}</option>
+                                    {% endfor %}
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="input_player_two">Player Two</label>
-                                <select class="form-control" id="input_player_two">
-                                    <option>Test Name</option>
-                                    <option>Test Name</option>
-                                    <option>Test Name</option>
-                                    <option>Test Name</option>
-                                    <option>Test Name</option>
+                                <label for="member_two">Player Two</label>
+                                <select class="form-control" id="member_two" name="member_two">
+                                    {% for first_name, last_name, nickname in players %}
+                                    <option>{{ first_name }} "{{ nickname }}" {{ last_name }}</option>
+                                    {% endfor %}
                                 </select>
                             </div>
                             <button type="submit" class="btn btn-success">Submit</button>

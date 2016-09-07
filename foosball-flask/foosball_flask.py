@@ -133,27 +133,48 @@ def add_team():
 
     """
 
+    players = FOOSBALL_DATA.get_all_players()
+
     if flask.request.method == 'POST':
-        team_name = flask.request.form['team_name']
-        member_one = flask.request.form['member_one']
-        member_two = flask.request.form['member_two']
+        team_name = flask.request.form['team_name'].encode('utf-8')
+        member_one = flask.request.form['member_one'].encode('utf-8')
+        member_two = flask.request.form['member_two'].encode('utf-8')
+
+        first_quote = member_one.find('"')
+        second_quote = member_one.find('"', first_quote + 1)
+        final_member_one = (member_one[:first_quote - 1],
+            member_one[second_quote + 2:],
+            member_one[first_quote + 1:second_quote])
+
+        first_quote = member_two.find('"')
+        second_quote = member_two.find('"', first_quote + 1)
+        final_member_two = (member_two[:first_quote - 1],
+            member_two[second_quote + 2:],
+            member_two[first_quote + 1:second_quote])
+
+        print final_member_one
+        print final_member_two
 
         try:
             FOOSBALL_DATA.add_team(team_name=team_name,
-                member_one=member_one, member_two=member_two)
+                member_one=final_member_one, member_two=final_member_two)
             FOOSBALL_DATA.commit_data()
         except data_manager_exceptions.DBValueError as error:
             LOGGER.error(error.msg)
-            return flask.render_template('addteam.html', error=error)
+            return flask.render_template('addteam.html', error=error,
+                players=players)
         except data_manager_exceptions.DBSyntaxError as error:
             LOGGER.error(error.msg)
-            return flask.render_template('addteam.html', error=error)
+            return flask.render_template('addteam.html', error=error,
+                players=players)
         except data_manager_exceptions.DBConnectionError as error:
             LOGGER.error(error.msg)
-            return flask.render_template('addteam.html', error=error)
+            return flask.render_template('addteam.html', error=error,
+                players=players)
         except data_manager_exceptions.DBExistError as error:
             LOGGER.error(error.msg)
-            return flask.render_template('addteam.html', error=error)
+            return flask.render_template('addteam.html', error=error,
+                players=players)
         else:
             pass
 
@@ -162,7 +183,7 @@ def add_team():
         return flask.render_template('team.html', message=message,
             teams=teams)
     elif flask.request.method == 'GET':
-        return flask.render_template('addteam.html')
+        return flask.render_template('addteam.html', players=players)
     else:
         raise foosball_exceptions.HTTPError("Received unrecognized HTTP method")
 
@@ -185,9 +206,9 @@ def add_player():
     """
 
     if flask.request.method == 'POST':
-        first_name = flask.request.form['first_name']
-        last_name = flask.request.form['last_name']
-        nickname = flask.request.form['nickname']
+        first_name = flask.request.form['first_name'].encode('utf-8')
+        last_name = flask.request.form['last_name'].encode('utf-8')
+        nickname = flask.request.form['nickname'].encode('utf-8')
 
         try:
             FOOSBALL_DATA.add_player(first_name=first_name,
