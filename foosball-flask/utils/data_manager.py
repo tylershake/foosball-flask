@@ -385,7 +385,8 @@ FROM player WHERE player_id = {0}".format(player[0]))
                     names = cursor.fetchall()
                     first_name, last_name, nickname = names[0]
 
-                    intermediate_teams = intermediate_teams + (first_name, last_name, nickname)
+                    intermediate_teams = intermediate_teams + (first_name,
+                        last_name, nickname)
 
                 all_teams = all_teams + (intermediate_teams,)
                 del intermediate_teams
@@ -532,6 +533,36 @@ to MySQL server")
         else:
             pass
 
+    def get_total_results(self):
+        """Method to get result count from database
+
+        Args:
+            None
+
+        Raises:
+            data_manager_exceptions.DBConnectionError
+            data_manager_exceptions.DBSyntaxError
+
+        """
+
+        try:
+            LOGGER.info("Getting total result count")
+            cursor = self.db_conn.cursor()
+            cursor.execute("SELECT COUNT(result_id) FROM result")
+            count = cursor.fetchone()[0]
+
+        except MySQLdb.OperationalError:
+            LOGGER.error("Cannot connect to MySQL server")
+            raise data_manager_exceptions.DBConnectionError("Cannot connect \
+to MySQL server")
+        except MySQLdb.ProgrammingError:
+            LOGGER.error("MySQL syntax error")
+            raise data_manager_exceptions.DBSyntaxError("MySQL syntax error")
+        else:
+            pass
+
+        return count
+
     def delete_team(self, team_name):
         """docstring"""
 
@@ -541,12 +572,6 @@ to MySQL server")
         """docstring"""
 
         cursor = self.db_conn.cursor()
-
-    def total_results(self):
-        """docstring"""
-
-        cursor = self.db_conn.cursor()
-
 
     def commit_data(self):
         """docstring"""

@@ -47,9 +47,10 @@ def index_redirect():
 
     player_count = FOOSBALL_DATA.get_total_players()
     team_count = FOOSBALL_DATA.get_total_teams()
+    result_count = FOOSBALL_DATA.get_total_results()
 
     return flask.render_template('dashboard.html', player_count=player_count,
-        team_count=team_count)
+        team_count=team_count, result_count=result_count)
 
 @FOOSBALL_APP.route('/index')
 def index():
@@ -65,9 +66,10 @@ def index():
 
     player_count = FOOSBALL_DATA.get_total_players()
     team_count = FOOSBALL_DATA.get_total_teams()
+    result_count = FOOSBALL_DATA.get_total_results()
 
     return flask.render_template('dashboard.html', player_count=player_count,
-        team_count=team_count)
+        team_count=team_count, result_count=result_count)
 
 @FOOSBALL_APP.route('/result')
 def result():
@@ -381,9 +383,10 @@ def team_stat():
 
     player_count = FOOSBALL_DATA.get_total_players()
     team_count = FOOSBALL_DATA.get_total_teams()
+    result_count = FOOSBALL_DATA.get_total_results()
 
     return flask.render_template('dashboard.html', player_count=player_count,
-        team_count=team_count)
+        team_count=team_count, result_count=result_count)
 
 @FOOSBALL_APP.route('/playerstat')
 def player_stat():
@@ -399,9 +402,10 @@ def player_stat():
 
     player_count = FOOSBALL_DATA.get_total_players()
     team_count = FOOSBALL_DATA.get_total_teams()
+    result_count = FOOSBALL_DATA.get_total_results()
 
     return flask.render_template('dashboard.html', player_count=player_count,
-        team_count=team_count)
+        team_count=team_count, result_count=result_count)
 
 def main():
     """Main entry point
