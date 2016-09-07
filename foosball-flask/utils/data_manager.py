@@ -68,11 +68,27 @@ UNIQUE INDEX player_id_UNIQUE (player_id ASC))")
 
             cursor.execute("CREATE TABLE IF NOT EXISTS team (\
 team_id INT NOT NULL AUTO_INCREMENT,\
-name VARCHAR(75) NOT NULL,\
+team_name VARCHAR(75) NOT NULL,\
 time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\
 PRIMARY KEY (team_id),\
 UNIQUE INDEX team_id_UNIQUE (team_id ASC),\
-UNIQUE INDEX name_UNIQUE (name ASC))")
+UNIQUE INDEX team_name_UNIQUE (team_name ASC))")
+
+            cursor.execute("CREATE TABLE IF NOT EXISTS player_team_xref (\
+player INT NOT NULL,\
+team INT NOT NULL,\
+INDEX player_idx (player ASC),\
+INDEX team_idx (team ASC),\
+CONSTRAINT player \
+FOREIGN KEY (player) \
+REFERENCES player (player_id) \
+ON DELETE NO ACTION \
+ON UPDATE NO ACTION,\
+CONSTRAINT team \
+FOREIGN KEY (team) \
+REFERENCES team (team_id) \
+ON DELETE NO ACTION \
+ON UPDATE NO ACTION)")
 
         except MySQLdb.OperationalError:
             LOGGER.error("Cannot connect to MySQL server")
@@ -156,6 +172,7 @@ to MySQL server")
         """
 
         #TODO check if data exists and don't delete if it does
+        #TODO deleting player should also delete a team
 
         if len(first_name) is 0:
             raise data_manager_exceptions.DBValueError("First name must be at \
@@ -296,10 +313,112 @@ to MySQL server")
 
         return count
 
-    def add_team(self, team_name, first_member, second_member):
-        """docstring"""
+    def get_all_teams(self):
+        """Method to get all teams from database
 
-        cursor = self.db_conn.cursor()
+        Args:
+            None
+
+        Raises:
+            data_manager_exceptions.DBConnectionError
+            data_manager_exceptions.DBSyntaxError
+
+        """
+
+        try:
+            LOGGER.info("Getting team list")
+            cursor = self.db_conn.cursor()
+            cursor.execute("SELECT team_id, team_name FROM team ORDER BY time DESC")
+            teams = cursor.fetchall()
+
+            print teams
+            for team_id, name in teams:
+                print team_id
+                print name
+
+#            cursor.execute("SELECT player, team FROM player_team_xref")
+#            references = cursor.fetchall()
+
+
+
+        except MySQLdb.OperationalError:
+            LOGGER.error("Cannot connect to MySQL server")
+            raise data_manager_exceptions.DBConnectionError("Cannot connect \
+to MySQL server")
+        except MySQLdb.ProgrammingError:
+            LOGGER.error("MySQL syntax error")
+            raise data_manager_exceptions.DBSyntaxError("MySQL syntax error")
+        else:
+            pass
+
+        return teams
+
+    def add_team(self, team_name, member_one, member_two):
+        """Method to add a team to database
+
+        Args:
+            team_name (str):    team name
+            member_one (tup):   first member names
+            member_two (tup):   second member names
+
+        Raises:
+            data_manager_exceptions.DBValueError
+            data_manager_exceptions.DBExistError
+            data_manager_exceptions.DBConnectionError
+            data_manager_exceptions.DBSyntaxError
+
+        """
+
+        if len(team_name) is 0:
+            raise data_manager_exceptions.DBValueError("Team name must be at \
+least one character")
+
+        if len(member_one) != 3:
+            raise data_manager_exceptions.DBValueError("First team member must\
+ be complete")
+
+        if len(member_two) != 3:
+            raise data_manager_exceptions.DBValueError("Second team member must\
+ be complete")
+
+        try:
+            LOGGER.info("Checking if team name already exists")
+            LOGGER.debug("Team parameters:\n\
+team name: %s", team_name)
+            cursor = self.db_conn.cursor()
+            cursor.execute("SELECT team_name FROM team")
+            teams = cursor.fetchall()
+            for team in teams:
+                if team == team_name:
+                    raise data_manager_exceptions.DBExistError("Team already \
+exists")
+
+            LOGGER.info("Checking if players are already on team together")
+            #TODO
+
+            LOGGER.info("Adding team to database")
+            cursor.execute("INSERT INTO team (team_name) VALUES (%s)",
+                (team_name,))
+
+            cursor.execute("INSERT INTO player_team_xref (player, team) \
+VALUES ((SELECT player_id FROM player WHERE first_name = '{0}' AND last_name \
+= '{1}' AND nickname = '{2}'), (SELECT team_id FROM team WHERE team_name = '{3}'\
+))".format(member_one[0], member_one[1], member_one[2], team_name))
+
+            cursor.execute("INSERT INTO player_team_xref (player, team) \
+VALUES ((SELECT player_id FROM player WHERE first_name = '{0}' AND last_name \
+= '{1}' AND nickname = '{2}'), (SELECT team_id FROM team WHERE team_name = '{3}'\
+))".format(member_two[0], member_two[1], member_two[2], team_name))
+
+        except MySQLdb.OperationalError:
+            LOGGER.error("Cannot connect to MySQL server")
+            raise data_manager_exceptions.DBConnectionError("Cannot connect \
+to MySQL server")
+        except MySQLdb.ProgrammingError:
+            LOGGER.error("MySQL syntax error")
+            raise data_manager_exceptions.DBSyntaxError("MySQL syntax error")
+        else:
+            pass
 
     def add_result(self, offense_winner, defense_winner, offense_loser, defense_loser):
         """docstring"""
@@ -335,12 +454,16 @@ to MySQL server")
 def main():
     """docstring"""
 
-    data_mgr = DataManager('foosball', 'foosball', '127.0.0.1',
-        'new_schema')
-    data_mgr.add_player('Tyler', 'Tyler', 'Shake')
+    data_mgr = DataManager(db_user='foosball',
+        db_pass='foosball', db_host='127.0.0.1', db_name='foosball')
+    #data_mgr.add_player('Branden', 'Branden', 'Branden')
+    #data_mgr.commit_data()
+    #data_mgr.add_player('Buuba', 'Buuba', 'Buuba')
+    data_mgr.add_team(team_name='Ballas',
+        member_one=('Branden', 'Branden', 'Branden'),
+        member_two=('Buuba', 'Buuba', 'Buuba'))
     data_mgr.commit_data()
-    data_mgr.delete_player('Tyler', 'Shake', 'Shake')
-    data_mgr.commit_data()
+    data_mgr.get_all_teams()
     del data_mgr
 
 if __name__ == '__main__':
