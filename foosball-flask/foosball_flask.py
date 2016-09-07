@@ -152,9 +152,6 @@ def add_team():
             member_two[second_quote + 2:],
             member_two[first_quote + 1:second_quote])
 
-        print final_member_one
-        print final_member_two
-
         try:
             FOOSBALL_DATA.add_team(team_name=team_name,
                 member_one=final_member_one, member_two=final_member_two)
@@ -287,19 +284,88 @@ def del_player():
     else:
         raise foosball_exceptions.HTTPError("Received unrecognized HTTP method")
 
-@FOOSBALL_APP.route('/addresult')
+@FOOSBALL_APP.route('/addresult', methods=['GET', 'POST'])
 def add_result():
     """Add Result webpage
 
     Args:
-        None
+        offense_winner(tup):    offense_winner
+        defense_winner (tup):   defense_winner
+        offense_loser (tup):    offense_loser
+        defense_loser (tup):    defense_loser
 
     Returns:
         display add result
+        display result
+
+    Raises:
+        foosball_exceptions.HTTPError
 
     """
 
-    return flask.render_template('addresult.html')
+    players = FOOSBALL_DATA.get_all_players()
+
+    if flask.request.method == 'POST':
+        offense_winner = flask.request.form['offense_winner'].encode('utf-8')
+        offense_loser = flask.request.form['offense_loser'].encode('utf-8')
+        defense_winner = flask.request.form['defense_winner'].encode('utf-8')
+        defense_loser = flask.request.form['defense_loser'].encode('utf-8')
+
+        first_quote = offense_winner.find('"')
+        second_quote = offense_winner.find('"', first_quote + 1)
+        final_offense_winner = (offense_winner[:first_quote - 1],
+            offense_winner[second_quote + 2:],
+            offense_winner[first_quote + 1:second_quote])
+
+        first_quote = offense_loser.find('"')
+        second_quote = offense_loser.find('"', first_quote + 1)
+        final_offense_loser = (offense_loser[:first_quote - 1],
+            offense_loser[second_quote + 2:],
+            offense_loser[first_quote + 1:second_quote])
+
+        first_quote = defense_winner.find('"')
+        second_quote = defense_winner.find('"', first_quote + 1)
+        final_defense_winner = (defense_winner[:first_quote - 1],
+            defense_winner[second_quote + 2:],
+            defense_winner[first_quote + 1:second_quote])
+
+        first_quote = defense_loser.find('"')
+        second_quote = defense_loser.find('"', first_quote + 1)
+        final_defense_loser = (defense_loser[:first_quote - 1],
+            defense_loser[second_quote + 2:],
+            defense_loser[first_quote + 1:second_quote])
+
+        try:
+            FOOSBALL_DATA.add_result(offense_winner=final_offense_winner,
+                defense_winner=final_defense_winner,
+                offense_loser=final_offense_loser,
+                defense_loser=final_defense_loser)
+            FOOSBALL_DATA.commit_data()
+        except data_manager_exceptions.DBValueError as error:
+            LOGGER.error(error.msg)
+            return flask.render_template('addresult.html', error=error,
+                players=players)
+        except data_manager_exceptions.DBSyntaxError as error:
+            LOGGER.error(error.msg)
+            return flask.render_template('addresult.html', error=error,
+                players=players)
+        except data_manager_exceptions.DBConnectionError as error:
+            LOGGER.error(error.msg)
+            return flask.render_template('addresult.html', error=error,
+                players=players)
+        except data_manager_exceptions.DBExistError as error:
+            LOGGER.error(error.msg)
+            return flask.render_template('addresult.html', error=error,
+                players=players)
+        else:
+            pass
+
+        message = 'Result successfully added'
+        return flask.render_template('result.html', message=message)
+    elif flask.request.method == 'GET':
+        return flask.render_template('addresult.html', players=players)
+    else:
+        raise foosball_exceptions.HTTPError("Received unrecognized HTTP method")
 
 @FOOSBALL_APP.route('/teamstat')
 def team_stat():

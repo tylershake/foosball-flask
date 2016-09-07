@@ -90,6 +90,40 @@ REFERENCES team (team_id) \
 ON DELETE NO ACTION \
 ON UPDATE NO ACTION)")
 
+            cursor.execute("CREATE TABLE IF NOT EXISTS result (\
+result_id INT NOT NULL AUTO_INCREMENT,\
+offense_winner INT NOT NULL,\
+defense_winner INT NOT NULL,\
+offense_loser INT NOT NULL,\
+defense_loser INT NOT NULL,\
+time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\
+PRIMARY KEY (result_id),\
+UNIQUE INDEX result_id_UNIQUE (result_id ASC),\
+INDEX offense_winner_idx (offense_winner ASC),\
+INDEX defense_winner_idx (defense_winner ASC),\
+INDEX offense_loser_idx (offense_loser ASC),\
+INDEX defense_loser_idx (defense_loser ASC),\
+CONSTRAINT offense_winner \
+FOREIGN KEY (offense_winner) \
+REFERENCES player (player_id) \
+ON DELETE NO ACTION \
+ON UPDATE NO ACTION,\
+CONSTRAINT defense_winner \
+FOREIGN KEY (defense_winner) \
+REFERENCES player (player_id) \
+ON DELETE NO ACTION \
+ON UPDATE NO ACTION,\
+CONSTRAINT offense_loser \
+FOREIGN KEY (offense_loser) \
+REFERENCES player (player_id) \
+ON DELETE NO ACTION \
+ON UPDATE NO ACTION,\
+CONSTRAINT defense_loser \
+FOREIGN KEY (defense_loser) \
+REFERENCES player (player_id) \
+ON DELETE NO ACTION \
+ON UPDATE NO ACTION)")
+
         except MySQLdb.OperationalError:
             LOGGER.error("Cannot connect to MySQL server")
             raise data_manager_exceptions.DBConnectionError("Cannot connect \
@@ -438,10 +472,65 @@ to MySQL server")
         else:
             pass
 
-    def add_result(self, offense_winner, defense_winner, offense_loser, defense_loser):
-        """docstring"""
+    def add_result(self, offense_winner, defense_winner, offense_loser,
+        defense_loser):
+        """Method to add a result to database
 
-        cursor = self.db_conn.cursor()
+        Args:
+            offense_winner(tup):    offense_winner
+            defense_winner (tup):   defense_winner
+            offense_loser (tup):    offense_loser
+            defense_loser (tup):    defense_loser
+
+        Raises:
+            data_manager_exceptions.DBValueError
+            data_manager_exceptions.DBExistError
+            data_manager_exceptions.DBConnectionError
+            data_manager_exceptions.DBSyntaxError
+
+        """
+
+        if len(offense_winner) != 3:
+            raise data_manager_exceptions.DBValueError("Offense winner must\
+ be complete")
+
+        if len(defense_winner) != 3:
+            raise data_manager_exceptions.DBValueError("Defense winner must\
+ be complete")
+
+        if len(offense_loser) != 3:
+            raise data_manager_exceptions.DBValueError("Offense loser must\
+ be complete")
+
+        if len(defense_loser) != 3:
+            raise data_manager_exceptions.DBValueError("Defense loser must\
+ be complete")
+
+        try:
+            LOGGER.info("Adding result to database")
+            cursor = self.db_conn.cursor()
+            cursor.execute("INSERT INTO result (offense_winner, \
+defense_winner, offense_loser, defense_loser) VALUES ((SELECT \
+player_id FROM player WHERE first_name = '{0}' AND last_name \
+= '{1}' AND nickname = '{2}'), (SELECT player_id FROM player WHERE first_name \
+= '{3}' AND last_name = '{4}' AND nickname = '{5}'), (SELECT player_id FROM \
+player WHERE first_name = '{6}' AND last_name = '{7}' AND nickname = '{8}'), \
+(SELECT player_id FROM player WHERE first_name = '{9}' AND last_name = '{10}' \
+AND nickname = '{11}'))".format(offense_winner[0],
+                offense_winner[1], offense_winner[2], defense_winner[0],
+                defense_winner[1], defense_winner[2], offense_loser[0],
+                offense_loser[1], offense_loser[2], defense_loser[0],
+                defense_loser[1], defense_loser[2]))
+
+        except MySQLdb.OperationalError:
+            LOGGER.error("Cannot connect to MySQL server")
+            raise data_manager_exceptions.DBConnectionError("Cannot connect \
+to MySQL server")
+        except MySQLdb.ProgrammingError:
+            LOGGER.error("MySQL syntax error")
+            raise data_manager_exceptions.DBSyntaxError("MySQL syntax error")
+        else:
+            pass
 
     def delete_team(self, team_name):
         """docstring"""
@@ -449,11 +538,6 @@ to MySQL server")
         cursor = self.db_conn.cursor()
 
     def delete_result(self, offense_winner, defense_winner, offense_loser, defense_loser, timestamp):
-        """docstring"""
-
-        cursor = self.db_conn.cursor()
-
-    def total_teams(self):
         """docstring"""
 
         cursor = self.db_conn.cursor()
