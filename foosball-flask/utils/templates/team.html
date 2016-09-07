@@ -97,21 +97,13 @@
                                             </tr>
                                         </thead>
                                         <tbody>
+                                            {% for team_name, first_name_one, last_name_one, nickname_one, first_name_two, last_name_two, nickname_two in teams %}
                                             <tr>
-                                                <td><strong>Test Name</strong></td>
-                                                <td><em>Test Name</em></td>
-                                                <td><em>Test Name</em></td>
+                                                <td><strong>{{ team_name }}</strong></td>
+                                                <td><em>{{ first_name_one }} "{{ nickname_one}}" {{ last_name_one }}</em></td>
+                                                <td><em>{{ first_name_two }} "{{ nickname_two}}" {{ last_name_two }}</em></td>
                                             </tr>
-                                            <tr>
-                                                <td><strong>Test Name</strong></td>
-                                                <td><em>Test Name</em></td>
-                                                <td><em>Test Name</em></td>
-                                            </tr>
-                                            <tr>
-                                                <td><strong>Test Name</strong></td>
-                                                <td><em>Test Name</em></td>
-                                                <td><em>Test Name</em></td>
-                                            </tr>
+                                            {% endfor %}
                                         </tbody>
                                     </table>
                                 </div>

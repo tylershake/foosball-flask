@@ -326,21 +326,35 @@ to MySQL server")
 
         """
 
+        all_teams = ()
+
         try:
             LOGGER.info("Getting team list")
             cursor = self.db_conn.cursor()
-            cursor.execute("SELECT team_id, team_name FROM team ORDER BY time DESC")
+            cursor.execute("SELECT team_id, team_name FROM team ORDER BY \
+time DESC")
             teams = cursor.fetchall()
 
-            print teams
             for team_id, name in teams:
-                print team_id
-                print name
+                intermediate_teams = ()
+                intermediate_teams = intermediate_teams + (name,)
+                cursor.execute("SELECT player FROM player_team_xref WHERE \
+team = {0}".format(team_id))
+                players = cursor.fetchall()
+                if len(players) != 2:
+                    raise data_manager_exceptions.DBValueError("Found more \
+than two players per team")
 
-#            cursor.execute("SELECT player, team FROM player_team_xref")
-#            references = cursor.fetchall()
+                for player in players:
+                    cursor.execute("SELECT first_name, last_name, nickname \
+FROM player WHERE player_id = {0}".format(player[0]))
+                    names = cursor.fetchall()
+                    first_name, last_name, nickname = names[0]
 
+                    intermediate_teams = intermediate_teams + (first_name, last_name, nickname)
 
+                all_teams = all_teams + (intermediate_teams,)
+                del intermediate_teams
 
         except MySQLdb.OperationalError:
             LOGGER.error("Cannot connect to MySQL server")
@@ -352,7 +366,7 @@ to MySQL server")
         else:
             pass
 
-        return teams
+        return all_teams
 
     def add_team(self, team_name, member_one, member_two):
         """Method to add a team to database
@@ -460,14 +474,14 @@ def main():
 
     data_mgr = DataManager(db_user='foosball',
         db_pass='foosball', db_host='127.0.0.1', db_name='foosball')
-    #data_mgr.add_player('Branden', 'Branden', 'Branden')
+    #data_mgr.add_player('Hello', 'Weird', 'Person')
     #data_mgr.commit_data()
     #data_mgr.add_player('Buuba', 'Buuba', 'Buuba')
-    data_mgr.add_team(team_name='Ballas',
-        member_one=('Branden', 'Branden', 'Branden'),
-        member_two=('Buuba', 'Buuba', 'Buuba'))
-    data_mgr.commit_data()
-    data_mgr.get_all_teams()
+    #data_mgr.add_team(team_name='Shot',
+    #    member_one=('Branden', 'Poops', 'Here'),
+    #    member_two=('Hello', 'Weird', 'Person'))
+    #data_mgr.commit_data()
+    print data_mgr.get_all_teams()
     del data_mgr
 
 if __name__ == '__main__':
