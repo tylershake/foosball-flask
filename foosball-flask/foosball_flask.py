@@ -115,19 +115,56 @@ def team():
 
     return flask.render_template('team.html')
 
-@FOOSBALL_APP.route('/addteam')
+@FOOSBALL_APP.route('/addteam', methods=['GET', 'POST'])
 def add_team():
     """Add Team webpage
 
     Args:
-        None
+        team_name (str):    team name
+        member_one (tup):   first team member
+        member_two (tup):   second team member
 
     Returns:
         display add team
+        display team
+
+    Raises:
+        foosball_exceptions.HTTPError
 
     """
 
-    return flask.render_template('addteam.html')
+    if flask.request.method == 'POST':
+        team_name = flask.request.form['team_name']
+        member_one = flask.request.form['member_one']
+        member_two = flask.request.form['member_two']
+
+        try:
+            FOOSBALL_DATA.add_team(team_name=team_name,
+                member_one=member_one, member_two=member_two)
+            FOOSBALL_DATA.commit_data()
+        except data_manager_exceptions.DBValueError as error:
+            LOGGER.error(error.msg)
+            return flask.render_template('addteam.html', error=error)
+        except data_manager_exceptions.DBSyntaxError as error:
+            LOGGER.error(error.msg)
+            return flask.render_template('addteam.html', error=error)
+        except data_manager_exceptions.DBConnectionError as error:
+            LOGGER.error(error.msg)
+            return flask.render_template('addteam.html', error=error)
+        except data_manager_exceptions.DBExistError as error:
+            LOGGER.error(error.msg)
+            return flask.render_template('addteam.html', error=error)
+        else:
+            pass
+
+        message = 'Team successfully added'
+        teams = FOOSBALL_DATA.get_all_teams()
+        return flask.render_template('team.html', message=message,
+            teams=teams)
+    elif flask.request.method == 'GET':
+        return flask.render_template('addteam.html')
+    else:
+        raise foosball_exceptions.HTTPError("Received unrecognized HTTP method")
 
 @FOOSBALL_APP.route('/addplayer', methods=['GET', 'POST'])
 def add_player():
