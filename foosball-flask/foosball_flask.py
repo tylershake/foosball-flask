@@ -111,6 +111,8 @@ def team():
 
     """
 
+    teams = FOOSBALL_DATA.get_all_teams()
+
     return flask.render_template('team.html')
 
 @FOOSBALL_APP.route('/addteam')
