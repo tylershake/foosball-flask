@@ -47,10 +47,10 @@ class DataManager(object):
         try:
             LOGGER.info("Connecting to MySQL database")
             LOGGER.debug("Connection parameters:\n\
-username: %s\n\
-password: %s\n\
-hostname: %s\n\
-database: %s", db_user, db_pass, db_host, db_name)
+username: {0}\n\
+password: {1}\n\
+hostname: {2}\n\
+database: {3}".format(db_user, db_pass, db_host, db_name))
             self.db_conn = MySQLdb.connect(user=db_user, passwd=db_pass,
                 host=db_host, db=db_name)
 
@@ -127,9 +127,9 @@ least one character")
         try:
             LOGGER.info("Checking if player already exists")
             LOGGER.debug("Player parameters:\n\
-first name: %s\n\
-last name: %s\n\
-nickname: %s", first_name, last_name, nickname)
+first name: {0}\n\
+last name: {1}\n\
+nickname: {2}".format(first_name, last_name, nickname))
             cursor = self.db_conn.cursor()
             cursor.execute("SELECT first_name, last_name, nickname FROM player")
             players = cursor.fetchall()
@@ -144,7 +144,7 @@ exists")
         
             LOGGER.info("Adding player to database")
             cursor.execute("INSERT INTO player (first_name, last_name, \
-nickname) VALUES (%s, %s, %s)", (first_name, last_name, nickname))
+nickname) VALUES ({0}, {1}, {2})".format(first_name, last_name, nickname))
         except MySQLdb.OperationalError:
             LOGGER.error("Cannot connect to MySQL server")
             raise data_manager_exceptions.DBConnectionError("Cannot connect \
@@ -185,9 +185,9 @@ least one character")
         try:
             LOGGER.info("Checking that player already exists")
             LOGGER.debug("Player parameters:\n\
-first name: %s\n\
-last name: %s\n\
-nickname: %s", first_name, last_name, nickname)
+first name: {0}\n\
+last name: {1}\n\
+nickname: {2}".format(first_name, last_name, nickname))
             cursor = self.db_conn.cursor()
             cursor.execute("SELECT player_id, first_name, last_name, \
 nickname FROM player")
@@ -204,8 +204,8 @@ in database to delete")
                 if (first_name == existing_first_name) and (last_name == 
                     existing_last_name) and (nickname == existing_nickname):
                     LOGGER.info("Deleting player from database")
-                    cursor.execute("DELETE FROM player WHERE player_id = %s",
-                        (player_id, ))
+                    cursor.execute("DELETE FROM player WHERE player_id \
+= {0}".format(player_id))
                     return
                 else:
                     continue
@@ -384,7 +384,7 @@ least one character")
         try:
             LOGGER.info("Checking if team name already exists")
             LOGGER.debug("Team parameters:\n\
-team name: %s", team_name)
+team name: {0}".format(team_name))
             cursor = self.db_conn.cursor()
             cursor.execute("SELECT team_name FROM team")
             teams = cursor.fetchall()
@@ -397,8 +397,8 @@ exists")
             #TODO
 
             LOGGER.info("Adding team to database")
-            cursor.execute("INSERT INTO team (team_name) VALUES (%s)",
-                (team_name,))
+            cursor.execute("INSERT INTO team (team_name) VALUES \
+({0})".format(team_name))
 
             cursor.execute("INSERT INTO player_team_xref (player, team) \
 VALUES ((SELECT player_id FROM player WHERE first_name = '{0}' AND last_name \
