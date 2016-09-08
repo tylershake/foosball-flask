@@ -83,7 +83,9 @@ def result():
 
     """
 
-    return flask.render_template('result.html')
+    results = FOOSBALL_DATA.get_all_results()
+
+    return flask.render_template('result.html', results=results)
 
 @FOOSBALL_APP.route('/player')
 def player():
@@ -363,7 +365,9 @@ def add_result():
             pass
 
         message = 'Result successfully added'
-        return flask.render_template('result.html', message=message)
+        results = FOOSBALL_DATA.get_all_results()
+        return flask.render_template('result.html', message=message,
+            results=results)
     elif flask.request.method == 'GET':
         return flask.render_template('addresult.html', players=players)
     else:

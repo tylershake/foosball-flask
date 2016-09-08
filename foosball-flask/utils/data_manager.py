@@ -563,6 +563,78 @@ to MySQL server")
 
         return count
 
+    def get_all_results(self):
+        """Method to get all results from database
+
+        Args:
+            None
+
+        Raises:
+            data_manager_exceptions.DBConnectionError
+            data_manager_exceptions.DBSyntaxError
+
+        """
+
+        all_results = ()
+
+        try:
+            LOGGER.info("Getting result list")
+            cursor = self.db_conn.cursor()
+            cursor.execute("SELECT offense_winner, defense_winner, \
+offense_loser, defense_loser FROM result ORDER BY time DESC")
+            results = cursor.fetchall()
+
+            for offense_winner_id, defense_winner_id, offense_loser_id, \
+                defense_loser_id in results:
+
+                intermediate_results = ()
+                cursor.execute("SELECT first_name, last_name, nickname FROM \
+player WHERE player_id = {0}".format(offense_winner_id))
+                offense_winner = cursor.fetchall()
+                first_name_offense_winner, last_name_offense_winner, \
+                    nickname_offense_winner = offense_winner[0]
+
+                cursor.execute("SELECT first_name, last_name, nickname FROM \
+player WHERE player_id = {0}".format(defense_winner_id))
+                defense_winner = cursor.fetchall()
+                first_name_defense_winner, last_name_defense_winner, \
+                    nickname_defense_winner = defense_winner[0]
+
+                cursor.execute("SELECT first_name, last_name, nickname FROM \
+player WHERE player_id = {0}".format(offense_loser_id))
+                offense_loser = cursor.fetchall()
+                first_name_offense_loser, last_name_offense_loser, \
+                    nickname_offense_loser = offense_loser[0]
+
+                cursor.execute("SELECT first_name, last_name, nickname FROM \
+player WHERE player_id = {0}".format(defense_loser_id))
+                defense_loser = cursor.fetchall()
+                first_name_defense_loser, last_name_defense_loser, \
+                    nickname_defense_loser = defense_loser[0]
+
+                intermediate_results = intermediate_results + \
+                    (first_name_offense_winner, last_name_offense_winner,
+                    nickname_offense_winner, first_name_defense_winner,
+                    last_name_defense_winner, nickname_defense_winner,
+                    first_name_offense_loser, last_name_offense_loser,
+                    nickname_offense_loser, first_name_defense_loser,
+                    last_name_defense_loser, nickname_defense_loser)
+
+                all_results = all_results + (intermediate_results,)
+                del intermediate_results
+
+        except MySQLdb.OperationalError:
+            LOGGER.error("Cannot connect to MySQL server")
+            raise data_manager_exceptions.DBConnectionError("Cannot connect \
+to MySQL server")
+        except MySQLdb.ProgrammingError:
+            LOGGER.error("MySQL syntax error")
+            raise data_manager_exceptions.DBSyntaxError("MySQL syntax error")
+        else:
+            pass
+
+        return all_results
+
     def delete_team(self, team_name):
         """docstring"""
 
@@ -590,7 +662,7 @@ def main():
     #    member_one=('Branden', 'Poops', 'Here'),
     #    member_two=('Hello', 'Weird', 'Person'))
     #data_mgr.commit_data()
-    print data_mgr.get_all_teams()
+    print data_mgr.get_all_results()
     del data_mgr
 
 if __name__ == '__main__':
