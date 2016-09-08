@@ -48,9 +48,13 @@ def index_redirect():
     player_count = FOOSBALL_DATA.get_total_players()
     team_count = FOOSBALL_DATA.get_total_teams()
     result_count = FOOSBALL_DATA.get_total_results()
+    individual_ranks = FOOSBALL_DATA.get_individual_rankings()
+    individual_ranks = sorted(individual_ranks, key=lambda tup: tup[4],
+        reverse=True)
 
     return flask.render_template('dashboard.html', player_count=player_count,
-        team_count=team_count, result_count=result_count)
+        team_count=team_count, result_count=result_count,
+        individual_ranks=individual_ranks)
 
 @FOOSBALL_APP.route('/index')
 def index():
@@ -67,9 +71,13 @@ def index():
     player_count = FOOSBALL_DATA.get_total_players()
     team_count = FOOSBALL_DATA.get_total_teams()
     result_count = FOOSBALL_DATA.get_total_results()
+    individual_ranks = FOOSBALL_DATA.get_individual_rankings()
+    individual_ranks = sorted(individual_ranks, key=lambda tup: tup[4],
+        reverse=True)
 
     return flask.render_template('dashboard.html', player_count=player_count,
-        team_count=team_count, result_count=result_count)
+        team_count=team_count, result_count=result_count,
+        individual_ranks=individual_ranks)
 
 @FOOSBALL_APP.route('/result')
 def result():
@@ -388,9 +396,13 @@ def team_stat():
     player_count = FOOSBALL_DATA.get_total_players()
     team_count = FOOSBALL_DATA.get_total_teams()
     result_count = FOOSBALL_DATA.get_total_results()
+    individual_ranks = FOOSBALL_DATA.get_individual_rankings()
+    individual_ranks = sorted(individual_ranks, key=lambda tup: tup[4],
+        reverse=True)
 
     return flask.render_template('dashboard.html', player_count=player_count,
-        team_count=team_count, result_count=result_count)
+        team_count=team_count, result_count=result_count,
+        individual_ranks=individual_ranks)
 
 @FOOSBALL_APP.route('/playerstat')
 def player_stat():
@@ -407,9 +419,13 @@ def player_stat():
     player_count = FOOSBALL_DATA.get_total_players()
     team_count = FOOSBALL_DATA.get_total_teams()
     result_count = FOOSBALL_DATA.get_total_results()
+    individual_ranks = FOOSBALL_DATA.get_individual_rankings()
+    individual_ranks = sorted(individual_ranks, key=lambda tup: tup[4],
+        reverse=True)
 
     return flask.render_template('dashboard.html', player_count=player_count,
-        team_count=team_count, result_count=result_count)
+        team_count=team_count, result_count=result_count,
+        individual_ranks=individual_ranks)
 
 def main():
     """Main entry point

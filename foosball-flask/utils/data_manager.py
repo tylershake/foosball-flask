@@ -742,6 +742,64 @@ to MySQL server")
 
         return all_results
 
+    def get_individual_rankings(self):
+        """Method to get individual rankings from database
+
+        Args:
+            None
+
+        Raises:
+            data_manager_exceptions.DBConnectionError
+            data_manager_exceptions.DBSyntaxError
+
+        """
+
+        ranks = []
+
+        try:
+            LOGGER.info("Getting individual rankings")
+            cursor = self.db_conn.cursor()
+            cursor.execute("SELECT player_id, first_name, last_name, \
+nickname FROM player")
+            players = cursor.fetchall()
+
+            for player_id, first_name, last_name, nickname in players:
+                cursor.execute("SELECT offense_rating, defense_rating FROM \
+player WHERE player_id = {0}".format(player_id))
+                offense_rating, defense_rating = cursor.fetchall()[0]
+
+                cursor.execute("SELECT mu, sigma FROM rating WHERE rating_id \
+= {0}".format(offense_rating))
+                offense_mu, offense_sigma = cursor.fetchall()[0]
+
+                cursor.execute("SELECT mu, sigma FROM rating WHERE rating_id \
+= {0}".format(defense_rating))
+                defense_mu, defense_sigma = cursor.fetchall()[0]
+
+                offense_rank = float(offense_mu) - (3 * float(offense_sigma))
+                defense_rank = float(defense_mu) - (3 * float(defense_sigma))
+
+                intermediate_rank = (first_name, last_name, nickname,
+                    'Offense', round(offense_rank, 4))
+                ranks.append(intermediate_rank)
+                del intermediate_rank
+                intermediate_rank = (first_name, last_name, nickname,
+                    'Defense', round(defense_rank, 4))
+                ranks.append(intermediate_rank)
+                del intermediate_rank
+
+        except MySQLdb.OperationalError:
+            LOGGER.error("Cannot connect to MySQL server")
+            raise data_manager_exceptions.DBConnectionError("Cannot connect \
+to MySQL server")
+        except MySQLdb.ProgrammingError:
+            LOGGER.error("MySQL syntax error")
+            raise data_manager_exceptions.DBSyntaxError("MySQL syntax error")
+        else:
+            pass
+
+        return ranks
+
     def delete_team(self, team_name):
         """docstring"""
 
@@ -762,14 +820,18 @@ def main():
 
     data_mgr = DataManager(db_user='foosball',
         db_pass='foosball', db_host='127.0.0.1', db_name='foosball')
-    data_mgr.add_player('Hello', 'Weird', 'Person')
-    data_mgr.commit_data()
+    #data_mgr.add_player('Hello', 'Weird', 'Person')
+    #data_mgr.commit_data()
     #data_mgr.add_player('Buuba', 'Buuba', 'Buuba')
     #data_mgr.add_team(team_name='Shot',
     #    member_one=('Branden', 'Poops', 'Here'),
     #    member_two=('Hello', 'Weird', 'Person'))
     #data_mgr.commit_data()
-    print data_mgr.get_all_results()
+    ranks = data_mgr.get_individual_rankings()
+    sorted_ranks = sorted(ranks, key=lambda tup: tup[4], reverse=True)
+
+    print sorted_ranks
+
     del data_mgr
 
 if __name__ == '__main__':
