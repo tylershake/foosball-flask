@@ -10,6 +10,7 @@ import logging.config
 import os
 import sys
 import traceback
+import trueskill
 
 import data_manager_exceptions
 
@@ -72,12 +73,19 @@ first_name VARCHAR(45) NOT NULL,\
 last_name VARCHAR(45) NOT NULL,\
 nickname VARCHAR(45) NULL,\
 time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\
-rating INT NOT NULL,\
+offense_rating INT NOT NULL,\
+defense_rating INT NOT NULL,\
 PRIMARY KEY (player_id),\
 UNIQUE INDEX player_id_UNIQUE (player_id ASC),\
-INDEX rating_idx (rating ASC),\
-CONSTRAINT rating \
-FOREIGN KEY (rating) \
+INDEX offense_rating_idx (offense_rating ASC),\
+INDEX defense_rating_idx (defense_rating ASC),\
+CONSTRAINT offense_rating \
+FOREIGN KEY (offense_rating) \
+REFERENCES rating (rating_id) \
+ON DELETE NO ACTION \
+ON UPDATE NO ACTION,\
+CONSTRAINT defense_rating \
+FOREIGN KEY (defense_rating) \
 REFERENCES rating (rating_id) \
 ON DELETE NO ACTION \
 ON UPDATE NO ACTION)")
@@ -199,10 +207,20 @@ nickname: {2}".format(first_name, last_name, nickname))
                     raise data_manager_exceptions.DBExistError("Player already \
 exists")
         
+            LOGGER.info("Creating new rating")
+            new_rating = trueskill.Rating()
+            cursor.execute("INSERT INTO rating (mu, sigma) VALUES ({0}, {1}\
+)".format(new_rating.mu, new_rating.sigma))
+            offense_rating_id = cursor.lastrowid
+            cursor.execute("INSERT INTO rating (mu, sigma) VALUES ({0}, {1}\
+)".format(new_rating.mu, new_rating.sigma))
+            defense_rating_id = cursor.lastrowid
+
             LOGGER.info("Adding player to database")
             cursor.execute("INSERT INTO player (first_name, last_name, \
-nickname) VALUES ('{0}', '{1}', '{2}')".format(first_name, last_name,
-                nickname))
+nickname, offense_rating, defense_rating) VALUES ('{0}', '{1}', '{2}', \
+{3}, {4})".format(first_name, last_name, nickname, offense_rating_id,
+                defense_rating_id))
         except MySQLdb.OperationalError:
             LOGGER.error("Cannot connect to MySQL server")
             raise data_manager_exceptions.DBConnectionError("Cannot connect \
@@ -546,6 +564,72 @@ AND nickname = '{11}'))".format(offense_winner[0],
                 offense_loser[1], offense_loser[2], defense_loser[0],
                 defense_loser[1], defense_loser[2]))
 
+            LOGGER.info("Updating ratings")
+            cursor.execute("SELECT player_id, offense_rating FROM player WHERE first_name = \
+'{0}' AND last_name = '{1}' AND nickname = '{2}'".format(offense_winner[0],
+                offense_winner[1], offense_winner[2]))
+            offense_winner_player_id, rating = cursor.fetchall()[0]
+            cursor.execute("SELECT mu, sigma FROM rating WHERE rating_id \
+= {0}".format(rating))
+            mu, sigma = cursor.fetchall()[0]
+            offense_winner_rating = trueskill.Rating(mu=float(mu), sigma=float(sigma))
+
+            cursor.execute("SELECT player_id, defense_rating FROM player WHERE first_name = \
+'{0}' AND last_name = '{1}' AND nickname = '{2}'".format(defense_winner[0],
+                defense_winner[1], defense_winner[2]))
+            defense_winner_player_id, rating = cursor.fetchall()[0]
+            cursor.execute("SELECT mu, sigma FROM rating WHERE rating_id \
+= {0}".format(rating))
+            mu, sigma = cursor.fetchall()[0]
+            defense_winner_rating = trueskill.Rating(mu=float(mu), sigma=float(sigma))
+
+            cursor.execute("SELECT player_id, offense_rating FROM player WHERE first_name = \
+'{0}' AND last_name = '{1}' AND nickname = '{2}'".format(offense_loser[0],
+                offense_loser[1], offense_loser[2]))
+            offense_loser_player_id, rating = cursor.fetchall()[0]
+            cursor.execute("SELECT mu, sigma FROM rating WHERE rating_id \
+= {0}".format(rating))
+            mu, sigma = cursor.fetchall()[0]
+            offense_loser_rating = trueskill.Rating(mu=float(mu), sigma=float(sigma))
+
+            cursor.execute("SELECT player_id, defense_rating FROM player WHERE first_name = \
+'{0}' AND last_name = '{1}' AND nickname = '{2}'".format(defense_loser[0],
+                defense_loser[1], defense_loser[2]))
+            defense_loser_player_id, rating = cursor.fetchall()[0]
+            cursor.execute("SELECT mu, sigma FROM rating WHERE rating_id \
+= {0}".format(rating))
+            mu, sigma = cursor.fetchall()[0]
+            defense_loser_rating = trueskill.Rating(mu=float(mu), sigma=float(sigma))
+
+            (new_offense_winner_rating, new_defense_winner_rating), \
+            (new_offense_loser_rating, new_defense_loser_rating) = \
+            trueskill.rate([(offense_winner_rating, defense_winner_rating),
+                (offense_loser_rating, defense_loser_rating)], ranks=[0,1])
+
+            cursor.execute("INSERT INTO rating (mu, sigma) VALUES ({0}, {1}\
+)".format(new_offense_winner_rating.mu, new_offense_winner_rating.sigma))
+            new_rating_id = cursor.lastrowid
+            cursor.execute("UPDATE player set offense_rating = {0} where \
+player_id = {1}".format(new_rating_id, offense_winner_player_id))
+
+            cursor.execute("INSERT INTO rating (mu, sigma) VALUES ({0}, {1}\
+)".format(new_defense_winner_rating.mu, new_defense_winner_rating.sigma))
+            new_rating_id = cursor.lastrowid
+            cursor.execute("UPDATE player set defense_rating = {0} where \
+player_id = {1}".format(new_rating_id, defense_winner_player_id))
+
+            cursor.execute("INSERT INTO rating (mu, sigma) VALUES ({0}, {1}\
+)".format(new_offense_loser_rating.mu, new_offense_loser_rating.sigma))
+            new_rating_id = cursor.lastrowid
+            cursor.execute("UPDATE player set offense_rating = {0} where \
+player_id = {1}".format(new_rating_id, offense_loser_player_id))
+
+            cursor.execute("INSERT INTO rating (mu, sigma) VALUES ({0}, {1}\
+)".format(new_defense_loser_rating.mu, new_defense_loser_rating.sigma))
+            new_rating_id = cursor.lastrowid
+            cursor.execute("UPDATE player set defense_rating = {0} where \
+player_id = {1}".format(new_rating_id, defense_loser_player_id))
+
         except MySQLdb.OperationalError:
             LOGGER.error("Cannot connect to MySQL server")
             raise data_manager_exceptions.DBConnectionError("Cannot connect \
@@ -678,8 +762,8 @@ def main():
 
     data_mgr = DataManager(db_user='foosball',
         db_pass='foosball', db_host='127.0.0.1', db_name='foosball')
-    #data_mgr.add_player('Hello', 'Weird', 'Person')
-    #data_mgr.commit_data()
+    data_mgr.add_player('Hello', 'Weird', 'Person')
+    data_mgr.commit_data()
     #data_mgr.add_player('Buuba', 'Buuba', 'Buuba')
     #data_mgr.add_team(team_name='Shot',
     #    member_one=('Branden', 'Poops', 'Here'),
