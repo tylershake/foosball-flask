@@ -56,23 +56,46 @@ database: {3}".format(db_user, db_pass, db_host, db_name))
 
             cursor = self.db_conn.cursor()
 
-            LOGGER.info("Creating player table if it doesn't exist")
+            LOGGER.info("Creating tables")
+
+            cursor.execute("CREATE TABLE IF NOT EXISTS rating (\
+rating_id INT NOT NULL AUTO_INCREMENT,\
+mu DECIMAL(6,4) NOT NULL,\
+sigma DECIMAL(6,4) NOT NULL,\
+time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\
+PRIMARY KEY (rating_id),\
+UNIQUE INDEX rating_id_UNIQUE (rating_id ASC))")
+
             cursor.execute("CREATE TABLE IF NOT EXISTS player (\
 player_id INT NOT NULL AUTO_INCREMENT,\
 first_name VARCHAR(45) NOT NULL,\
 last_name VARCHAR(45) NOT NULL,\
 nickname VARCHAR(45) NULL,\
 time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\
+rating INT NOT NULL,\
 PRIMARY KEY (player_id),\
-UNIQUE INDEX player_id_UNIQUE (player_id ASC))")
+UNIQUE INDEX player_id_UNIQUE (player_id ASC),\
+INDEX rating_idx (rating ASC),\
+CONSTRAINT rating \
+FOREIGN KEY (rating) \
+REFERENCES rating (rating_id) \
+ON DELETE NO ACTION \
+ON UPDATE NO ACTION)")
 
             cursor.execute("CREATE TABLE IF NOT EXISTS team (\
 team_id INT NOT NULL AUTO_INCREMENT,\
 team_name VARCHAR(75) NOT NULL,\
 time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\
+rating INT NOT NULL,\
 PRIMARY KEY (team_id),\
 UNIQUE INDEX team_id_UNIQUE (team_id ASC),\
-UNIQUE INDEX team_name_UNIQUE (team_name ASC))")
+UNIQUE INDEX team_name_UNIQUE (team_name ASC),\
+INDEX rating_idx (rating ASC),\
+CONSTRAINT rating_1 \
+FOREIGN KEY (rating) \
+REFERENCES rating (rating_id) \
+ON DELETE NO ACTION \
+ON UPDATE NO ACTION)")
 
             cursor.execute("CREATE TABLE IF NOT EXISTS player_team_xref (\
 player INT NOT NULL,\
