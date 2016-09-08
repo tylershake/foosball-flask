@@ -57,7 +57,7 @@ database: {3}".format(db_user, db_pass, db_host, db_name))
 
             cursor = self.db_conn.cursor()
 
-            LOGGER.info("Creating tables")
+            LOGGER.info("Creating MySQL tables")
 
             cursor.execute("CREATE TABLE IF NOT EXISTS rating (\
 rating_id INT NOT NULL AUTO_INCREMENT,\
@@ -156,17 +156,146 @@ ON DELETE NO ACTION \
 ON UPDATE NO ACTION)")
 
         except MySQLdb.OperationalError:
-            LOGGER.error("Cannot connect to MySQL server")
+            LOGGER.error("MySQL operational error occured")
+            traceback.print_exc()
             raise data_manager_exceptions.DBConnectionError("Cannot connect \
 to MySQL server")
+
         except MySQLdb.ProgrammingError:
-            LOGGER.error("MySQL syntax error")
+            LOGGER.error("MySQL programming error")
+            traceback.print_exc()
             raise data_manager_exceptions.DBSyntaxError("MySQL syntax error")
+
         else:
             pass
 
+    def check_if_player_exists(self, first_name, last_name, nickname):
+        """Method to check if player currently exists in database
+
+        Args:
+            first_name (str):   player first name
+            last_name(str):     player last name
+            nickname (str):     player nickname
+
+        Returns:
+            (bool):             True/False if player exists
+
+        Raises:
+            data_manager_exceptions.DBConnectionError
+            data_manager_exceptions.DBSyntaxError
+
+        """
+
+        try:
+            LOGGER.info("Checking if player already exists")
+            LOGGER.debug("Player parameters:\n\
+first name: {0}\n\
+last name: {1}\n\
+nickname: {2}".format(first_name, last_name, nickname))
+
+            cursor = self.db_conn.cursor()
+            cursor.execute("SELECT first_name, last_name, nickname FROM player")
+            players = cursor.fetchall()
+
+            for existing_first_name, existing_last_name, existing_nickname in \
+                players:
+            
+                if (first_name == existing_first_name) and (last_name == 
+                    existing_last_name) and (nickname == existing_nickname):
+                    return False
+
+        except MySQLdb.OperationalError:
+            LOGGER.error("MySQL operational error occured")
+            traceback.print_exc()
+            raise data_manager_exceptions.DBConnectionError("Cannot connect \
+to MySQL server")
+
+        except MySQLdb.ProgrammingError:
+            LOGGER.error("MySQL programming error")
+            traceback.print_exc()
+            raise data_manager_exceptions.DBSyntaxError("MySQL syntax error")
+
+        else:
+            return True
+    def check_if_team_exists(self, team_name):
+        """Method to check if team currently exists in database
+
+        Args:
+            team_name (str):    team name
+
+        Returns:
+            (bool):             True/False if team exists
+
+        Raises:
+            data_manager_exceptions.DBConnectionError
+            data_manager_exceptions.DBSyntaxError
+
+        """
+
+        try:
+            LOGGER.info("Checking if team already exists")
+            LOGGER.debug("Team parameters:\nTeam name: {0}".format(team_name))
+
+            cursor = self.db_conn.cursor()
+            cursor.execute("SELECT team_name FROM team")
+            teams = cursor.fetchall()
+            for team in teams:
+                if team == team_name:
+                    return False
+
+        except MySQLdb.OperationalError:
+            LOGGER.error("MySQL operational error occured")
+            traceback.print_exc()
+            raise data_manager_exceptions.DBConnectionError("Cannot connect \
+to MySQL server")
+
+        except MySQLdb.ProgrammingError:
+            LOGGER.error("MySQL programming error")
+            traceback.print_exc()
+            raise data_manager_exceptions.DBSyntaxError("MySQL syntax error")
+
+        else:
+            return True
+
+    def add_rating(self):
+        """Method to add a new rating to the database
+
+        Args:
+            None
+
+        Return:
+            rating_id (int):    rating_id for rating just created
+
+        Raises:
+            data_manager_exceptions.DBConnectionError
+            data_manager_exceptions.DBSyntaxError
+
+        """
+
+        try:
+            LOGGER.info("Creating new rating")
+            new_rating = trueskill.Rating()
+            cursor = self.db_conn.cursor()
+            cursor.execute("INSERT INTO rating (mu, sigma) VALUES ({0}, {1}\
+)".format(new_rating.mu, new_rating.sigma))
+            rating_id = cursor.lastrowid
+
+        except MySQLdb.OperationalError:
+            LOGGER.error("MySQL operational error occured")
+            traceback.print_exc()
+            raise data_manager_exceptions.DBConnectionError("Cannot connect \
+to MySQL server")
+
+        except MySQLdb.ProgrammingError:
+            LOGGER.error("MySQL programming error")
+            traceback.print_exc()
+            raise data_manager_exceptions.DBSyntaxError("MySQL syntax error")
+
+        else:
+            return rating_id
+
     def add_player(self, first_name, last_name, nickname):
-        """Method to add a player to database
+        """Method to add a player to the database
 
         Args:
             first_name (str):   player first name
@@ -190,48 +319,41 @@ least one character")
 least one character")
 
         try:
-            LOGGER.info("Checking if player already exists")
-            LOGGER.debug("Player parameters:\n\
-first name: {0}\n\
-last name: {1}\n\
-nickname: {2}".format(first_name, last_name, nickname))
+            if not self.check_if_player_exists(first_name=first_name,
+                last_name=last_name, nickname=nickname):
+                raise data_manager_exceptions.DBExistError("Name already \
+exists in database")
+
+            offense_rating_id = self.add_rating()
+            defense_rating_id = self.add_rating()
+
             cursor = self.db_conn.cursor()
-            cursor.execute("SELECT first_name, last_name, nickname FROM player")
-            players = cursor.fetchall()
-            for player in players:
-                existing_first_name, existing_last_name, existing_nickname = \
-                    player
-            
-                if (first_name == existing_first_name) and (last_name == 
-                    existing_last_name) and (nickname == existing_nickname):
-                    raise data_manager_exceptions.DBExistError("Player already \
-exists")
-        
-            LOGGER.info("Creating new rating")
-            new_rating = trueskill.Rating()
-            cursor.execute("INSERT INTO rating (mu, sigma) VALUES ({0}, {1}\
-)".format(new_rating.mu, new_rating.sigma))
-            offense_rating_id = cursor.lastrowid
-            cursor.execute("INSERT INTO rating (mu, sigma) VALUES ({0}, {1}\
-)".format(new_rating.mu, new_rating.sigma))
-            defense_rating_id = cursor.lastrowid
 
             LOGGER.info("Adding player to database")
             cursor.execute("INSERT INTO player (first_name, last_name, \
 nickname, offense_rating, defense_rating) VALUES ('{0}', '{1}', '{2}', \
 {3}, {4})".format(first_name, last_name, nickname, offense_rating_id,
                 defense_rating_id))
+
         except MySQLdb.OperationalError:
-            LOGGER.error("Cannot connect to MySQL server")
+            LOGGER.error("MySQL operational error occured")
+            traceback.print_exc()
             raise data_manager_exceptions.DBConnectionError("Cannot connect \
 to MySQL server")
+
         except MySQLdb.ProgrammingError:
-            LOGGER.error("MySQL syntax error")
+            LOGGER.error("MySQL programming error")
+            traceback.print_exc()
             raise data_manager_exceptions.DBSyntaxError("MySQL syntax error")
+
         else:
             pass
 
+    def edit_player(self):
+        """TODO"""
+
     def delete_player(self, first_name, last_name, nickname):
+        """TODO"""
         """Method to delete a player from the database
 
         Args:
@@ -304,6 +426,9 @@ to MySQL server")
         Args:
             None
 
+        Returns:
+            players (tup):  tuple of player tuples
+
         Raises:
             data_manager_exceptions.DBConnectionError
             data_manager_exceptions.DBSyntaxError
@@ -318,22 +443,27 @@ ORDER BY time DESC")
             players = cursor.fetchall()
 
         except MySQLdb.OperationalError:
-            LOGGER.error("Cannot connect to MySQL server")
+            LOGGER.error("MySQL operational error occured")
+            traceback.print_exc()
             raise data_manager_exceptions.DBConnectionError("Cannot connect \
 to MySQL server")
-        except MySQLdb.ProgrammingError:
-            LOGGER.error("MySQL syntax error")
-            raise data_manager_exceptions.DBSyntaxError("MySQL syntax error")
-        else:
-            pass
 
-        return players
+        except MySQLdb.ProgrammingError:
+            LOGGER.error("MySQL programming error")
+            traceback.print_exc()
+            raise data_manager_exceptions.DBSyntaxError("MySQL syntax error")
+
+        else:
+            return players
 
     def get_total_players(self):
         """Method to get player count from database
 
         Args:
             None
+
+        Returns:
+            count (int):    count of players
 
         Raises:
             data_manager_exceptions.DBConnectionError
@@ -348,22 +478,27 @@ to MySQL server")
             count = cursor.fetchone()[0]
 
         except MySQLdb.OperationalError:
-            LOGGER.error("Cannot connect to MySQL server")
+            LOGGER.error("MySQL operational error occured")
+            traceback.print_exc()
             raise data_manager_exceptions.DBConnectionError("Cannot connect \
 to MySQL server")
-        except MySQLdb.ProgrammingError:
-            LOGGER.error("MySQL syntax error")
-            raise data_manager_exceptions.DBSyntaxError("MySQL syntax error")
-        else:
-            pass
 
-        return count
+        except MySQLdb.ProgrammingError:
+            LOGGER.error("MySQL programming error")
+            traceback.print_exc()
+            raise data_manager_exceptions.DBSyntaxError("MySQL syntax error")
+
+        else:
+            return count
 
     def get_total_teams(self):
         """Method to get team count from database
 
         Args:
             None
+
+        Return:
+            count (int):    total number of teams
 
         Raises:
             data_manager_exceptions.DBConnectionError
@@ -378,22 +513,27 @@ to MySQL server")
             count = cursor.fetchone()[0]
 
         except MySQLdb.OperationalError:
-            LOGGER.error("Cannot connect to MySQL server")
+            LOGGER.error("MySQL operational error occured")
+            traceback.print_exc()
             raise data_manager_exceptions.DBConnectionError("Cannot connect \
 to MySQL server")
-        except MySQLdb.ProgrammingError:
-            LOGGER.error("MySQL syntax error")
-            raise data_manager_exceptions.DBSyntaxError("MySQL syntax error")
-        else:
-            pass
 
-        return count
+        except MySQLdb.ProgrammingError:
+            LOGGER.error("MySQL programming error")
+            traceback.print_exc()
+            raise data_manager_exceptions.DBSyntaxError("MySQL syntax error")
+
+        else:
+            return count
 
     def get_all_teams(self):
         """Method to get all teams from database
 
         Args:
             None
+
+        Returns:
+            teams (tup):    tuple of team tuples
 
         Raises:
             data_manager_exceptions.DBConnectionError
@@ -423,8 +563,7 @@ than two players per team")
                 for player in players:
                     cursor.execute("SELECT first_name, last_name, nickname \
 FROM player WHERE player_id = {0}".format(player[0]))
-                    names = cursor.fetchall()
-                    first_name, last_name, nickname = names[0]
+                    first_name, last_name, nickname = cursor.fetchall()[0]
 
                     intermediate_teams = intermediate_teams + (first_name,
                         last_name, nickname)
@@ -433,16 +572,18 @@ FROM player WHERE player_id = {0}".format(player[0]))
                 del intermediate_teams
 
         except MySQLdb.OperationalError:
-            LOGGER.error("Cannot connect to MySQL server")
+            LOGGER.error("MySQL operational error occured")
+            traceback.print_exc()
             raise data_manager_exceptions.DBConnectionError("Cannot connect \
 to MySQL server")
-        except MySQLdb.ProgrammingError:
-            LOGGER.error("MySQL syntax error")
-            raise data_manager_exceptions.DBSyntaxError("MySQL syntax error")
-        else:
-            pass
 
-        return all_teams
+        except MySQLdb.ProgrammingError:
+            LOGGER.error("MySQL programming error")
+            traceback.print_exc()
+            raise data_manager_exceptions.DBSyntaxError("MySQL syntax error")
+
+        else:
+            return all_teams
 
     def add_team(self, team_name, member_one, member_two):
         """Method to add a team to database
@@ -473,22 +614,17 @@ least one character")
  be complete")
 
         try:
-            LOGGER.info("Checking if team name already exists")
-            LOGGER.debug("Team parameters:\n\
-team name: {0}".format(team_name))
-            cursor = self.db_conn.cursor()
-            cursor.execute("SELECT team_name FROM team")
-            teams = cursor.fetchall()
-            for team in teams:
-                if team == team_name:
-                    raise data_manager_exceptions.DBExistError("Team already \
+
+            if not self.check_if_team_exists(team_name=team_name):
+                raise data_manager_exceptions.DBExistError("Team already \
 exists")
 
-            LOGGER.info("Checking if players are already on team together")
+            #LOGGER.info("Checking if players are already on team together")
             #TODO
 
             LOGGER.info("Adding team to database")
 
+            cursor = self.db_conn.cursor()
             cursor.execute("INSERT INTO team (team_name) VALUES \
 ('{0}')".format(team_name))
 
@@ -505,12 +641,16 @@ VALUES ((SELECT player_id FROM player WHERE first_name = '{0}' AND last_name \
                 member_two[2], team_id))
 
         except MySQLdb.OperationalError:
-            LOGGER.error("Cannot connect to MySQL server")
+            LOGGER.error("MySQL operational error occured")
+            traceback.print_exc()
             raise data_manager_exceptions.DBConnectionError("Cannot connect \
 to MySQL server")
+
         except MySQLdb.ProgrammingError:
-            LOGGER.error("MySQL syntax error")
+            LOGGER.error("MySQL programming error")
+            traceback.print_exc()
             raise data_manager_exceptions.DBSyntaxError("MySQL syntax error")
+
         else:
             pass
 
@@ -564,47 +704,55 @@ AND nickname = '{11}'))".format(offense_winner[0],
                 offense_loser[1], offense_loser[2], defense_loser[0],
                 defense_loser[1], defense_loser[2]))
 
-            LOGGER.info("Updating ratings")
-            cursor.execute("SELECT player_id, offense_rating FROM player WHERE first_name = \
-'{0}' AND last_name = '{1}' AND nickname = '{2}'".format(offense_winner[0],
-                offense_winner[1], offense_winner[2]))
+            LOGGER.info("Updating individual ratings")
+            cursor.execute("SELECT player_id, offense_rating FROM player \
+WHERE first_name = '{0}' AND last_name = '{1}' AND nickname = '{2}'".format(
+                offense_winner[0], offense_winner[1], offense_winner[2]))
             offense_winner_player_id, rating = cursor.fetchall()[0]
+
             cursor.execute("SELECT mu, sigma FROM rating WHERE rating_id \
 = {0}".format(rating))
             mu, sigma = cursor.fetchall()[0]
-            offense_winner_rating = trueskill.Rating(mu=float(mu), sigma=float(sigma))
+            offense_winner_rating = trueskill.Rating(mu=float(mu),
+                sigma=float(sigma))
 
-            cursor.execute("SELECT player_id, defense_rating FROM player WHERE first_name = \
-'{0}' AND last_name = '{1}' AND nickname = '{2}'".format(defense_winner[0],
-                defense_winner[1], defense_winner[2]))
+            cursor.execute("SELECT player_id, defense_rating FROM player \
+WHERE first_name = '{0}' AND last_name = '{1}' AND nickname = '{2}'".format(
+                defense_winner[0], defense_winner[1], defense_winner[2]))
             defense_winner_player_id, rating = cursor.fetchall()[0]
+
             cursor.execute("SELECT mu, sigma FROM rating WHERE rating_id \
 = {0}".format(rating))
             mu, sigma = cursor.fetchall()[0]
-            defense_winner_rating = trueskill.Rating(mu=float(mu), sigma=float(sigma))
+            defense_winner_rating = trueskill.Rating(mu=float(mu),
+                sigma=float(sigma))
 
-            cursor.execute("SELECT player_id, offense_rating FROM player WHERE first_name = \
-'{0}' AND last_name = '{1}' AND nickname = '{2}'".format(offense_loser[0],
-                offense_loser[1], offense_loser[2]))
+            cursor.execute("SELECT player_id, offense_rating FROM player \
+WHERE first_name = '{0}' AND last_name = '{1}' AND nickname = '{2}'".format(
+                offense_loser[0], offense_loser[1], offense_loser[2]))
             offense_loser_player_id, rating = cursor.fetchall()[0]
-            cursor.execute("SELECT mu, sigma FROM rating WHERE rating_id \
-= {0}".format(rating))
-            mu, sigma = cursor.fetchall()[0]
-            offense_loser_rating = trueskill.Rating(mu=float(mu), sigma=float(sigma))
 
-            cursor.execute("SELECT player_id, defense_rating FROM player WHERE first_name = \
-'{0}' AND last_name = '{1}' AND nickname = '{2}'".format(defense_loser[0],
-                defense_loser[1], defense_loser[2]))
-            defense_loser_player_id, rating = cursor.fetchall()[0]
             cursor.execute("SELECT mu, sigma FROM rating WHERE rating_id \
 = {0}".format(rating))
             mu, sigma = cursor.fetchall()[0]
-            defense_loser_rating = trueskill.Rating(mu=float(mu), sigma=float(sigma))
+            offense_loser_rating = trueskill.Rating(mu=float(mu),
+                sigma=float(sigma))
+
+            cursor.execute("SELECT player_id, defense_rating FROM player \
+WHERE first_name = '{0}' AND last_name = '{1}' AND nickname = '{2}'".format(
+                defense_loser[0], defense_loser[1], defense_loser[2]))
+            defense_loser_player_id, rating = cursor.fetchall()[0]
+
+            cursor.execute("SELECT mu, sigma FROM rating WHERE rating_id \
+= {0}".format(rating))
+            mu, sigma = cursor.fetchall()[0]
+            defense_loser_rating = trueskill.Rating(mu=float(mu),
+                sigma=float(sigma))
 
             (new_offense_winner_rating, new_defense_winner_rating), \
             (new_offense_loser_rating, new_defense_loser_rating) = \
             trueskill.rate([(offense_winner_rating, defense_winner_rating),
-                (offense_loser_rating, defense_loser_rating)], ranks=[0,1])
+                (offense_loser_rating, defense_loser_rating)], ranks=[0, 1])
 
             cursor.execute("INSERT INTO rating (mu, sigma) VALUES ({0}, {1}\
 )".format(new_offense_winner_rating.mu, new_offense_winner_rating.sigma))
@@ -631,12 +779,16 @@ player_id = {1}".format(new_rating_id, offense_loser_player_id))
 player_id = {1}".format(new_rating_id, defense_loser_player_id))
 
         except MySQLdb.OperationalError:
-            LOGGER.error("Cannot connect to MySQL server")
+            LOGGER.error("MySQL operational error occured")
+            traceback.print_exc()
             raise data_manager_exceptions.DBConnectionError("Cannot connect \
 to MySQL server")
+
         except MySQLdb.ProgrammingError:
-            LOGGER.error("MySQL syntax error")
+            LOGGER.error("MySQL programming error")
+            traceback.print_exc()
             raise data_manager_exceptions.DBSyntaxError("MySQL syntax error")
+
         else:
             pass
 
@@ -645,6 +797,9 @@ to MySQL server")
 
         Args:
             None
+
+        Returns:
+            count (int):    total number of results
 
         Raises:
             data_manager_exceptions.DBConnectionError
@@ -659,16 +814,18 @@ to MySQL server")
             count = cursor.fetchone()[0]
 
         except MySQLdb.OperationalError:
-            LOGGER.error("Cannot connect to MySQL server")
+            LOGGER.error("MySQL operational error occured")
+            traceback.print_exc()
             raise data_manager_exceptions.DBConnectionError("Cannot connect \
 to MySQL server")
-        except MySQLdb.ProgrammingError:
-            LOGGER.error("MySQL syntax error")
-            raise data_manager_exceptions.DBSyntaxError("MySQL syntax error")
-        else:
-            pass
 
-        return count
+        except MySQLdb.ProgrammingError:
+            LOGGER.error("MySQL programming error")
+            traceback.print_exc()
+            raise data_manager_exceptions.DBSyntaxError("MySQL syntax error")
+
+        else:
+            return count
 
     def get_all_results(self):
         """Method to get all results from database
@@ -731,22 +888,27 @@ player WHERE player_id = {0}".format(defense_loser_id))
                 del intermediate_results
 
         except MySQLdb.OperationalError:
-            LOGGER.error("Cannot connect to MySQL server")
+            LOGGER.error("MySQL operational error occured")
+            traceback.print_exc()
             raise data_manager_exceptions.DBConnectionError("Cannot connect \
 to MySQL server")
-        except MySQLdb.ProgrammingError:
-            LOGGER.error("MySQL syntax error")
-            raise data_manager_exceptions.DBSyntaxError("MySQL syntax error")
-        else:
-            pass
 
-        return all_results
+        except MySQLdb.ProgrammingError:
+            LOGGER.error("MySQL programming error")
+            traceback.print_exc()
+            raise data_manager_exceptions.DBSyntaxError("MySQL syntax error")
+
+        else:
+            return all_results
 
     def get_individual_rankings(self):
         """Method to get individual rankings from database
 
         Args:
             None
+
+        Returns:
+            ranks (list):   individual rank list
 
         Raises:
             data_manager_exceptions.DBConnectionError
@@ -789,29 +951,35 @@ player WHERE player_id = {0}".format(player_id))
                 del intermediate_rank
 
         except MySQLdb.OperationalError:
-            LOGGER.error("Cannot connect to MySQL server")
+            LOGGER.error("MySQL operational error occured")
+            traceback.print_exc()
             raise data_manager_exceptions.DBConnectionError("Cannot connect \
 to MySQL server")
-        except MySQLdb.ProgrammingError:
-            LOGGER.error("MySQL syntax error")
-            raise data_manager_exceptions.DBSyntaxError("MySQL syntax error")
-        else:
-            pass
 
-        return ranks
+        except MySQLdb.ProgrammingError:
+            LOGGER.error("MySQL programming error")
+            traceback.print_exc()
+            raise data_manager_exceptions.DBSyntaxError("MySQL syntax error")
+
+        else:
+            return ranks
 
     def delete_team(self, team_name):
-        """docstring"""
-
-        cursor = self.db_conn.cursor()
+        """TODO"""
 
     def delete_result(self, offense_winner, defense_winner, offense_loser, defense_loser, timestamp):
-        """docstring"""
-
-        cursor = self.db_conn.cursor()
+        """TODO"""
 
     def commit_data(self):
-        """docstring"""
+        """Method to save results to database
+
+        Args:
+            None
+
+        Returns:
+            None
+
+        """
 
         self.db_conn.commit()
 
