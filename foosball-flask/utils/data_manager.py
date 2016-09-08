@@ -941,12 +941,30 @@ player WHERE player_id = {0}".format(player_id))
                 offense_rank = float(offense_mu) - (3 * float(offense_sigma))
                 defense_rank = float(defense_mu) - (3 * float(defense_sigma))
 
+                cursor.execute("SELECT COUNT(result_id) FROM result WHERE \
+offense_winner = {0}".format(player_id))
+                offense_win_count = cursor.fetchone()[0]
+
+                cursor.execute("SELECT COUNT(result_id) FROM result WHERE \
+defense_winner = {0}".format(player_id))
+                defense_win_count = cursor.fetchone()[0]
+
+                cursor.execute("SELECT COUNT(result_id) FROM result WHERE \
+offense_loser = {0}".format(player_id))
+                offense_lose_count = cursor.fetchone()[0]
+
+                cursor.execute("SELECT COUNT(result_id) FROM result WHERE \
+defense_loser = {0}".format(player_id))
+                defense_lose_count = cursor.fetchone()[0]
+
                 intermediate_rank = (first_name, last_name, nickname,
-                    'Offense', round(offense_rank, 4))
+                    'Offense', round(offense_rank, 4), offense_win_count,
+                    offense_lose_count)
                 ranks.append(intermediate_rank)
                 del intermediate_rank
                 intermediate_rank = (first_name, last_name, nickname,
-                    'Defense', round(defense_rank, 4))
+                    'Defense', round(defense_rank, 4), defense_win_count,
+                    defense_lose_count)
                 ranks.append(intermediate_rank)
                 del intermediate_rank
 

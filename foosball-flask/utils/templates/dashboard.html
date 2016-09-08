@@ -145,14 +145,14 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {% for first_name, last_name, nickname, position, rank in individual_ranks %}
+                                            {% for first_name, last_name, nickname, position, rank, wins, loses in individual_ranks %}
                                             <tr>
                                                 <td>{{ loop.index }}</td>
                                                 <td>{{ first_name }} "{{ nickname }}" {{ last_name }}</td>
                                                 <td>{{ position }}</td>
                                                 <td>{{ rank * 100 }}</td>
-                                                <td>5</td>
-                                                <td>5</td>
+                                                <td>{{ wins }}</td>
+                                                <td>{{ loses }}</td>
                                             </tr>
                                             {% endfor %}
                                         </tbody>
