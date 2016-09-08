@@ -5,7 +5,7 @@ python python-dev python-pip
 
 RUN pip install flask
 
-RUN pip install flask-mysqldb
+RUN pip install trueskill
 
 COPY . /app
 
