@@ -179,62 +179,15 @@
                                             </tr>
                                         </thead>
                                         <tbody>
+                                            {% for team_name, rank, win, loss in team_ranks %}
                                             <tr>
-                                                <td>1</td>
-                                                <td>Test Name</td>
-                                                <td>1800</td>
-                                                <td>5</td>
-                                                <td>5</td>
+                                                <td>{{ loop.index }}</td>
+                                                <td>{{ team_name }}</td>
+                                                <td>{{ rank * 100 }}</td>
+                                                <td>{{ win }}</td>
+                                                <td>{{ loss }}</td>
                                             </tr>
-                                            <tr>
-                                                <td>2</td>
-                                                <td>Test Name</td>
-                                                <td>1800</td>
-                                                <td>5</td>
-                                                <td>5</td>
-                                            </tr>
-                                            <tr>
-                                                <td>3</td>
-                                                <td>Test Name</td>
-                                                <td>1800</td>
-                                                <td>5</td>
-                                                <td>5</td>
-                                            </tr>
-                                            <tr>
-                                                <td>4</td>
-                                                <td>Test Name</td>
-                                                <td>1800</td>
-                                                <td>5</td>
-                                                <td>5</td>
-                                            </tr>
-                                            <tr>
-                                                <td>5</td>
-                                                <td>Test Name</td>
-                                                <td>1800</td>
-                                                <td>5</td>
-                                                <td>5</td>
-                                            </tr>
-                                            <tr>
-                                                <td>6</td>
-                                                <td>Test Name</td>
-                                                <td>1800</td>
-                                                <td>5</td>
-                                                <td>5</td>
-                                            </tr>
-                                            <tr>
-                                                <td>7</td>
-                                                <td>Test Name</td>
-                                                <td>1800</td>
-                                                <td>5</td>
-                                                <td>5</td>
-                                            </tr>
-                                            <tr>
-                                                <td>8</td>
-                                                <td>Test Name</td>
-                                                <td>1800</td>
-                                                <td>5</td>
-                                                <td>5</td>
-                                            </tr>
+                                            {% endfor %}
                                         </tbody>
                                     </table>
                                 </div>

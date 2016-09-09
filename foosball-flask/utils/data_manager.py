@@ -169,6 +169,62 @@ to MySQL server")
         else:
             pass
 
+    def check_if_players_on_team(self, member_one, member_two):
+        """Method to check if two players are already on a team
+
+        Args:
+            player_one (tup):    player one
+            player_two (tup):    player two
+
+        Returns:
+            (bool):                 True/False
+
+        Raises:
+            data_manager_exceptions.DBConnectionError
+            data_manager_exceptions.DBSyntaxError
+
+        """
+
+        try:
+            LOGGER.info("Checking if players are already on team")
+            cursor = self.db_conn.cursor()
+
+            cursor.execute("SELECT player_id FROM player WHERE \
+first_name = '{0}' AND last_name = '{1}' AND nickname = '{2}'".format(
+                member_one[0], member_one[1], member_one[2]))
+            player_one_id = cursor.fetchone()[0]
+
+            cursor.execute("SELECT player_id FROM player WHERE \
+first_name = '{0}' AND last_name = '{1}' AND nickname = '{2}'".format(
+                member_two[0], member_two[1], member_two[2]))
+            player_two_id = cursor.fetchone()[0]
+
+            cursor.execute("SELECT team FROM player_team_xref WHERE \
+player = {0}".format(player_one_id))
+            teams = cursor.fetchall()
+
+            for team in teams:
+                cursor.execute("SELECT player FROM player_team_xref WHERE \
+team = {0}".format(team[0]))
+                players = cursor.fetchall()
+                for player in players:
+                    if player[0] == player_two_id:
+                        return team[0]
+
+        except MySQLdb.OperationalError:
+            LOGGER.error("MySQL operational error occured")
+            traceback.print_exc()
+            raise data_manager_exceptions.DBConnectionError("Cannot connect \
+to MySQL server")
+
+        except MySQLdb.ProgrammingError:
+            LOGGER.error("MySQL programming error")
+            traceback.print_exc()
+            raise data_manager_exceptions.DBSyntaxError("MySQL syntax error")
+
+        else:
+            return False
+
     def check_if_player_exists(self, first_name, last_name, nickname):
         """Method to check if player currently exists in database
 
@@ -619,14 +675,17 @@ least one character")
                 raise data_manager_exceptions.DBExistError("Team already \
 exists")
 
-            #LOGGER.info("Checking if players are already on team together")
-            #TODO
+            if self.check_if_players_on_team(member_one, member_two):
+                raise data_manager_exceptions.DBExistError("Players already \
+on team together")
+            
+            rating_id = self.add_rating()
 
             LOGGER.info("Adding team to database")
 
             cursor = self.db_conn.cursor()
-            cursor.execute("INSERT INTO team (team_name) VALUES \
-('{0}')".format(team_name))
+            cursor.execute("INSERT INTO team (team_name, rating) VALUES \
+('{0}', {1})".format(team_name, rating_id))
 
             team_id = cursor.lastrowid
 
@@ -651,8 +710,13 @@ to MySQL server")
             traceback.print_exc()
             raise data_manager_exceptions.DBSyntaxError("MySQL syntax error")
 
+        except MySQLdb.IntegrityError:
+            LOGGER.error("MySQL programming error")
+            traceback.print_exc()
+            raise data_manager_exceptions.DBValueError("MySQL integrity error")
+
         else:
-            pass
+            return team_id
 
     def add_result(self, offense_winner, defense_winner, offense_loser,
         defense_loser):
@@ -778,6 +842,67 @@ player_id = {1}".format(new_rating_id, offense_loser_player_id))
             cursor.execute("UPDATE player set defense_rating = {0} where \
 player_id = {1}".format(new_rating_id, defense_loser_player_id))
 
+            # team ratings
+            LOGGER.info("Updating team ratings")
+
+            # check if winners are on a team together
+            winning_team = self.check_if_players_on_team(
+                member_one=offense_winner,
+                member_two=defense_winner)
+
+            if not winning_team:
+                # create a new team
+                winning_team = self.add_team(team_name="{0} & {1}\
+".format(offense_winner[0], defense_winner[0]), member_one=offense_winner,
+                    member_two=defense_winner)
+
+            # check if losers are on a team together
+            losing_team = self.check_if_players_on_team(
+                member_one=offense_loser,
+                member_two=defense_loser)
+
+            if not losing_team:
+                # create a new team
+                losing_team = self.add_team(team_name="{0} & {1}\
+".format(offense_loser[0], defense_loser[0]), member_one=offense_loser,
+                    member_two=defense_loser)
+
+            # get ratings
+            cursor.execute("SELECT rating from team WHERE team_id \
+= {0}".format(winning_team))
+            winning_team_rating_id = cursor.fetchone()[0]
+            
+            cursor.execute("SELECT rating from team WHERE team_id \
+= {0}".format(losing_team))
+            losing_team_rating_id = cursor.fetchone()[0]
+
+            cursor.execute("SELECT mu, sigma FROM rating WHERE rating_id \
+= {0}".format(winning_team_rating_id))
+            mu, sigma = cursor.fetchall()[0]
+            winning_team_rating = trueskill.Rating(mu=float(mu),
+                sigma=float(sigma))
+
+            cursor.execute("SELECT mu, sigma FROM rating WHERE rating_id \
+= {0}".format(losing_team_rating_id))
+            mu, sigma = cursor.fetchall()[0]
+            losing_team_rating = trueskill.Rating(mu=float(mu),
+                sigma=float(sigma))
+
+            new_winning_team_rating, new_losing_team_rating = \
+            trueskill.rate_1vs1(winning_team_rating, losing_team_rating)
+
+            cursor.execute("INSERT INTO rating (mu, sigma) VALUES ({0}, {1}\
+)".format(new_winning_team_rating.mu, new_winning_team_rating.sigma))
+            new_rating_id = cursor.lastrowid
+            cursor.execute("UPDATE team SET rating = {0} where \
+team_id = {1}".format(new_rating_id, winning_team))
+
+            cursor.execute("INSERT INTO rating (mu, sigma) VALUES ({0}, {1}\
+)".format(new_losing_team_rating.mu, new_losing_team_rating.sigma))
+            new_rating_id = cursor.lastrowid
+            cursor.execute("UPDATE team SET rating = {0} where \
+team_id = {1}".format(new_rating_id, losing_team))
+
         except MySQLdb.OperationalError:
             LOGGER.error("MySQL operational error occured")
             traceback.print_exc()
@@ -900,6 +1025,76 @@ to MySQL server")
 
         else:
             return all_results
+
+    def get_team_rankings(self):
+        """Method to get team rankings from database
+
+        Args:
+            None
+
+        Returns:
+            ranks (list):   team rank list
+
+        Raises:
+            data_manager_exceptions.DBConnectionError
+            data_manager_exceptions.DBSyntaxError
+
+        """
+
+        ranks = []
+
+        try:
+            LOGGER.info("Getting team rankings")
+            cursor = self.db_conn.cursor()
+            cursor.execute("SELECT team_id, team_name FROM team")
+            teams = cursor.fetchall()
+
+            for team_id, team_name in teams:
+                cursor.execute("SELECT rating FROM \
+team WHERE team_id = {0}".format(team_id))
+                team_rating = cursor.fetchall()[0]
+
+                cursor.execute("SELECT mu, sigma FROM rating WHERE rating_id \
+= {0}".format(team_rating[0]))
+                offense_mu, offense_sigma = cursor.fetchall()[0]
+
+                team_rank = float(offense_mu) - (3 * float(offense_sigma))
+
+                # get player_ids
+                cursor.execute("SELECT player from player_team_xref \
+WHERE team = {0}".format(team_id))
+                players = cursor.fetchall()
+                player_one = players[0]
+                player_two = players[1]
+
+                cursor.execute("SELECT COUNT(result_id) FROM result WHERE \
+(offense_winner = {0} AND defense_winner = {1}) OR (offense_winner = {1} \
+AND defense_winner = {0})".format(player_one[0], player_two[0]))
+                team_win_count = cursor.fetchone()[0]
+
+                cursor.execute("SELECT COUNT(result_id) FROM result WHERE \
+(offense_loser = {0} AND defense_loser = {1}) OR (offense_loser = {1} \
+AND defense_loser = {0})".format(player_one[0], player_two[0]))
+                team_loss_count = cursor.fetchone()[0]
+
+                intermediate_rank = (team_name, round(team_rank, 4),
+                    team_win_count, team_loss_count)
+                ranks.append(intermediate_rank)
+                del intermediate_rank
+
+        except MySQLdb.OperationalError:
+            LOGGER.error("MySQL operational error occured")
+            traceback.print_exc()
+            raise data_manager_exceptions.DBConnectionError("Cannot connect \
+to MySQL server")
+
+        except MySQLdb.ProgrammingError:
+            LOGGER.error("MySQL programming error")
+            traceback.print_exc()
+            raise data_manager_exceptions.DBSyntaxError("MySQL syntax error")
+
+        else:
+            return ranks
 
     def get_individual_rankings(self):
         """Method to get individual rankings from database
