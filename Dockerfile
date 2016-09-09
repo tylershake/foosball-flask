@@ -7,6 +7,8 @@ RUN pip install flask
 
 RUN pip install trueskill
 
+RUN pip install mysql-python
+
 COPY . /app
 
 WORKDIR /app
