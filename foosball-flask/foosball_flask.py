@@ -16,9 +16,8 @@ import utils.data_manager_exceptions as data_manager_exceptions
 import utils.foosball_exceptions as foosball_exceptions
 
 try:
-    logging.config.fileConfig("./utils/logging.conf",
+    logging.config.fileConfig("./foosball-flask/utils/logging.conf",
         disable_existing_loggers=False)
-    LOGGER = logging.getLogger("foosball")
 except IOError:
     traceback.print_exc()
     sys.exit("Aborting. Unable to find foosball log config")
@@ -28,10 +27,10 @@ else:
 FOOSBALL_APP = flask.Flask(__name__, static_folder='./utils/static',
     template_folder='./utils/templates')
 
-FOOSBALL_APP.config['DEBUG'] = True
+#FOOSBALL_APP.config['DEBUG'] = True
 
 FOOSBALL_DATA = data_manager.DataManager(db_user='foosball',
-    db_pass='foosball', db_host='127.0.0.1', db_name='foosball')
+    db_pass='foosball', db_host='db_1', db_name='foosball')
 
 @FOOSBALL_APP.route('/')
 def index_redirect():
