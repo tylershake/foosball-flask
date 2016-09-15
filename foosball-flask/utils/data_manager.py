@@ -36,6 +36,10 @@ class DataManager(object):
 
     Attributes:
         db_conn (obj):  MySQL database connection object
+        db_user (str):  MySQL username
+        db_pass (str):  MySQL password
+        db_host (str):  MySQL server host address
+        db_name (str):  MySQL database name
 
     Raises:
         data_manager_exceptions.DBConnectionError
@@ -54,6 +58,10 @@ hostname: {2}\n\
 database: {3}".format(db_user, db_pass, db_host, db_name))
             self.db_conn = MySQLdb.connect(user=db_user, passwd=db_pass,
                 host=db_host, db=db_name)
+            self.db_user = db_user
+            self.db_pass = db_pass
+            self.db_host = db_host
+            self.db_name = db_name
 
             cursor = self.db_conn.cursor()
 
@@ -169,6 +177,28 @@ to MySQL server")
         else:
             pass
 
+    def check_if_db_connected(self):
+        """Method to check if still connected to database
+
+        Args:
+            None
+
+        Returns:
+            None
+
+        """
+
+        try:
+            cursor = self.db_conn.cursor()
+            cursor.execute("SELECT * FROM player")
+        except MySQLdb.OperationalError:
+            LOGGER.error("Database connection dropped, reconnecting")
+            traceback.print_exc()
+            self.db_conn = MySQLdb.connect(user=self.db_user,
+                passwd=self.db_pass, host=self.db_host, db=self.db_name)
+        else:
+            pass
+
     def check_if_players_on_team(self, member_one, member_two):
         """Method to check if two players are already on a team
 
@@ -187,6 +217,7 @@ to MySQL server")
 
         try:
             LOGGER.info("Checking if players are already on team")
+            self.check_if_db_connected()
             cursor = self.db_conn.cursor()
 
             cursor.execute("SELECT player_id FROM player WHERE \
@@ -249,6 +280,7 @@ first name: {0}\n\
 last name: {1}\n\
 nickname: {2}".format(first_name, last_name, nickname))
 
+            self.check_if_db_connected()
             cursor = self.db_conn.cursor()
             cursor.execute("SELECT first_name, last_name, nickname FROM player")
             players = cursor.fetchall()
@@ -292,6 +324,7 @@ to MySQL server")
             LOGGER.info("Checking if team already exists")
             LOGGER.debug("Team parameters:\nTeam name: {0}".format(team_name))
 
+            self.check_if_db_connected()
             cursor = self.db_conn.cursor()
             cursor.execute("SELECT team_name FROM team")
             teams = cursor.fetchall()
@@ -331,6 +364,7 @@ to MySQL server")
         try:
             LOGGER.info("Creating new rating")
             new_rating = trueskill.Rating()
+            self.check_if_db_connected()
             cursor = self.db_conn.cursor()
             cursor.execute("INSERT INTO rating (mu, sigma) VALUES ({0}, {1}\
 )".format(new_rating.mu, new_rating.sigma))
@@ -383,6 +417,7 @@ exists in database")
             offense_rating_id = self.add_rating()
             defense_rating_id = self.add_rating()
 
+            self.check_if_db_connected()
             cursor = self.db_conn.cursor()
 
             LOGGER.info("Adding player to database")
@@ -442,6 +477,7 @@ least one character")
 first name: {0}\n\
 last name: {1}\n\
 nickname: {2}".format(first_name, last_name, nickname))
+            self.check_if_db_connected()
             cursor = self.db_conn.cursor()
             cursor.execute("SELECT player_id, first_name, last_name, \
 nickname FROM player")
@@ -493,6 +529,7 @@ to MySQL server")
 
         try:
             LOGGER.info("Getting player list")
+            self.check_if_db_connected()
             cursor = self.db_conn.cursor()
             cursor.execute("SELECT first_name, last_name, nickname FROM player \
 ORDER BY time DESC")
@@ -529,6 +566,7 @@ to MySQL server")
 
         try:
             LOGGER.info("Getting total player count")
+            self.check_if_db_connected()
             cursor = self.db_conn.cursor()
             cursor.execute("SELECT COUNT(player_id) FROM player")
             count = cursor.fetchone()[0]
@@ -564,6 +602,7 @@ to MySQL server")
 
         try:
             LOGGER.info("Getting total team count")
+            self.check_if_db_connected()
             cursor = self.db_conn.cursor()
             cursor.execute("SELECT COUNT(team_id) FROM team")
             count = cursor.fetchone()[0]
@@ -601,6 +640,7 @@ to MySQL server")
 
         try:
             LOGGER.info("Getting team list")
+            self.check_if_db_connected()
             cursor = self.db_conn.cursor()
             cursor.execute("SELECT team_id, team_name FROM team ORDER BY \
 time DESC")
@@ -683,6 +723,7 @@ on team together")
 
             LOGGER.info("Adding team to database")
 
+            self.check_if_db_connected()
             cursor = self.db_conn.cursor()
             cursor.execute("INSERT INTO team (team_name, rating) VALUES \
 ('{0}', {1})".format(team_name, rating_id))
@@ -754,6 +795,7 @@ to MySQL server")
 
         try:
             LOGGER.info("Adding result to database")
+            self.check_if_db_connected()
             cursor = self.db_conn.cursor()
             cursor.execute("INSERT INTO result (offense_winner, \
 defense_winner, offense_loser, defense_loser) VALUES ((SELECT \
@@ -934,6 +976,7 @@ to MySQL server")
 
         try:
             LOGGER.info("Getting total result count")
+            self.check_if_db_connected()
             cursor = self.db_conn.cursor()
             cursor.execute("SELECT COUNT(result_id) FROM result")
             count = cursor.fetchone()[0]
@@ -968,6 +1011,7 @@ to MySQL server")
 
         try:
             LOGGER.info("Getting result list")
+            self.check_if_db_connected()
             cursor = self.db_conn.cursor()
             cursor.execute("SELECT offense_winner, defense_winner, \
 offense_loser, defense_loser FROM result ORDER BY time DESC")
@@ -1045,6 +1089,7 @@ to MySQL server")
 
         try:
             LOGGER.info("Getting team rankings")
+            self.check_if_db_connected()
             cursor = self.db_conn.cursor()
             cursor.execute("SELECT team_id, team_name FROM team")
             teams = cursor.fetchall()
@@ -1115,6 +1160,7 @@ to MySQL server")
 
         try:
             LOGGER.info("Getting individual rankings")
+            self.check_if_db_connected()
             cursor = self.db_conn.cursor()
             cursor.execute("SELECT player_id, first_name, last_name, \
 nickname FROM player")
