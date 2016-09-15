@@ -27,7 +27,7 @@ else:
 FOOSBALL_APP = flask.Flask(__name__, static_folder='./utils/static',
     template_folder='./utils/templates')
 
-#FOOSBALL_APP.config['DEBUG'] = True
+FOOSBALL_APP.config['DEBUG'] = True
 
 FOOSBALL_DATA = data_manager.DataManager(db_user='foosball',
     db_pass='foosball', db_host='db_1', db_name='foosball')
