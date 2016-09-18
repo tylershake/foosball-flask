@@ -11,6 +11,7 @@ import os
 import sys
 import traceback
 import trueskill
+import datetime
 
 import data_manager_exceptions
 
@@ -1014,11 +1015,11 @@ to MySQL server")
             self.check_if_db_connected()
             cursor = self.db_conn.cursor()
             cursor.execute("SELECT offense_winner, defense_winner, \
-offense_loser, defense_loser FROM result ORDER BY time DESC")
+offense_loser, defense_loser, time FROM result ORDER BY time DESC")
             results = cursor.fetchall()
 
             for offense_winner_id, defense_winner_id, offense_loser_id, \
-                defense_loser_id in results:
+                defense_loser_id, time in results:
 
                 intermediate_results = ()
                 cursor.execute("SELECT first_name, last_name, nickname FROM \
@@ -1051,7 +1052,8 @@ player WHERE player_id = {0}".format(defense_loser_id))
                     last_name_defense_winner, nickname_defense_winner,
                     first_name_offense_loser, last_name_offense_loser,
                     nickname_offense_loser, first_name_defense_loser,
-                    last_name_defense_loser, nickname_defense_loser)
+                    last_name_defense_loser, nickname_defense_loser,
+                    time.strftime('%Y-%m-%d'))
 
                 all_results = all_results + (intermediate_results,)
                 del intermediate_results

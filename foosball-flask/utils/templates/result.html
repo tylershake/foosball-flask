@@ -90,14 +90,14 @@
                                 <div class="table-responsive">
                                     <table class="table table-hover table-striped">
                                         <tbody>
-                                            {% for first_name_offense_winner, last_name_offense_winner, nickname_offense_winner, first_name_defense_winner, last_name_defense_winner, nickname_defense_winner, first_name_offense_loser, last_name_offense_loser, nickname_offense_loser, first_name_defense_loser, last_name_defense_loser, nickname_defense_loser in results%}
+                                            {% for first_name_offense_winner, last_name_offense_winner, nickname_offense_winner, first_name_defense_winner, last_name_defense_winner, nickname_defense_winner, first_name_offense_loser, last_name_offense_loser, nickname_offense_loser, first_name_defense_loser, last_name_defense_loser, nickname_defense_loser, date in results%}
                                             <tr>
                                                 <td><strong>{{ first_name_offense_winner }} "{{  nickname_offense_winner }}" {{last_name_offense_winner }}</strong></td>
                                                 <td><strong>{{ first_name_defense_winner }} "{{  nickname_defense_winner }}" {{last_name_defense_winner }}</strong></td>
                                                 <td><em>defeats</em></td>
                                                 <td><strong>{{ first_name_offense_loser }} "{{  nickname_offense_loser }}" {{last_name_offense_loser }}</strong></td>
                                                 <td><strong>{{ first_name_defense_loser }} "{{  nickname_defense_loser }}" {{last_name_defense_loser }}</strong></td>
-                                                <td><em>5 hours ago</em></td>
+                                                <td><em>{{ date }}</em></td>
                                             </tr>
                                             {% endfor %}
                                         </tbody>
