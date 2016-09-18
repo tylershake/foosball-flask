@@ -10,6 +10,7 @@ import logging
 import logging.config
 import traceback
 import sys
+import time
 
 import utils.data_manager as data_manager
 import utils.data_manager_exceptions as data_manager_exceptions
@@ -27,7 +28,10 @@ else:
 FOOSBALL_APP = flask.Flask(__name__, static_folder='./utils/static',
     template_folder='./utils/templates')
 
-FOOSBALL_APP.config['DEBUG'] = True
+#FOOSBALL_APP.config['DEBUG'] = True
+
+MYSQL_STARTUP = 10
+time.sleep(MYSQL_STARTUP)
 
 FOOSBALL_DATA = data_manager.DataManager(db_user='foosball',
     db_pass='foosball', db_host='db_1', db_name='foosball')
