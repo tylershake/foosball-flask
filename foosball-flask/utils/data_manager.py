@@ -1114,6 +1114,14 @@ WHERE team = {0}".format(team_id))
                 player_one = players[0]
                 player_two = players[1]
 
+                cursor.execute("SELECT first_name FROM player WHERE \
+player_id = {0}".format(player_one[0]))
+                player_one_name = cursor.fetchone()[0]
+
+                cursor.execute("SELECT first_name FROM player WHERE \
+player_id = {0}".format(player_two[0]))
+                player_two_name = cursor.fetchone()[0]
+
                 cursor.execute("SELECT COUNT(result_id) FROM result WHERE \
 (offense_winner = {0} AND defense_winner = {1}) OR (offense_winner = {1} \
 AND defense_winner = {0})".format(player_one[0], player_two[0]))
@@ -1125,7 +1133,8 @@ AND defense_loser = {0})".format(player_one[0], player_two[0]))
                 team_loss_count = cursor.fetchone()[0]
 
                 intermediate_rank = (team_name, round(team_rank, 4),
-                    team_win_count, team_loss_count)
+                    team_win_count, team_loss_count, player_one_name,
+                    player_two_name)
                 ranks.append(intermediate_rank)
                 del intermediate_rank
 

@@ -179,10 +179,10 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {% for team_name, rank, win, loss in team_ranks %}
+                                            {% for team_name, rank, win, loss, player_one, player_two in team_ranks %}
                                             <tr>
                                                 <td>{{ loop.index }}</td>
-                                                <td>{{ team_name }}</td>
+                                                <td data-toggle="tooltip" title="{{ player_one }} and {{ player_two }}">{{ team_name }}</td>
                                                 <td>{{ rank * 100 }}</td>
                                                 <td>{{ win }}</td>
                                                 <td>{{ loss }}</td>
