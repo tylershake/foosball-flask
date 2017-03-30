@@ -256,6 +256,55 @@ def add_player():
     else:
         raise foosball_exceptions.HTTPError("Received unrecognized HTTP method")
 
+
+@FOOSBALL_APP.route('/editplayer', methods=['GET', 'POST'])
+def edit_player():
+    """Edit an existing player name"""
+    players = FOOSBALL_DATA.get_all_players()
+    if flask.request.method == 'POST':
+        previous_first_name = flask.request.form['previous_first_name'].encode('utf-8')
+        previous_last_name = flask.request.form['previous_last_name'].encode('utf-8')
+        previous_nickname = flask.request.form['previous_nickname'].encode('utf-8')
+
+        first_name = flask.request.form['first_name'].encode('utf-8')
+        last_name = flask.request.form['last_name'].encode('utf-8')
+        nickname = flask.request.form['nickname'].encode('utf-8')
+
+        try:
+            FOOSBALL_DATA.edit_player(previous_first_name,
+                                      previous_last_name,
+                                      previous_nickname,
+                                      first_name,
+                                      last_name,
+                                      nickname)
+
+            FOOSBALL_DATA.commit_data()
+        except data_manager_exceptions.DBValueError as error:
+            LOGGER.error(error.msg)
+            return flask.render_template('editplayer.html', error=error)
+        except data_manager_exceptions.DBSyntaxError as error:
+            LOGGER.error(error.msg)
+            return flask.render_template('editplayer.html', error=error)
+        except data_manager_exceptions.DBConnectionError as error:
+            LOGGER.error(error.msg)
+            return flask.render_template('editplayer.html', error=error)
+        except data_manager_exceptions.DBExistError as error:
+            LOGGER.error(error.msg)
+            return flask.render_template('editplayer.html', error=error)
+        else:
+            pass
+
+        message = 'Player successfully added'
+        players = FOOSBALL_DATA.get_all_players()
+        return flask.render_template('editplayer.html', message=message,
+            players=players)
+    elif flask.request.method == 'GET':
+        return flask.render_template('editplayer.html', players=players)
+    else:
+        raise foosball_exceptions.HTTPError("Received unrecognized HTTP method")
+
+
+
 @FOOSBALL_APP.route('/delplayer', methods=['GET'])
 def del_player():
     """Delete player webpage
