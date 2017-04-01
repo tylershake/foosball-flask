@@ -8,6 +8,7 @@ algorithm.
 import flask
 import logging
 import logging.config
+from pprint import pprint
 import traceback
 import sys
 import time
@@ -27,6 +28,7 @@ else:
 
 FOOSBALL_APP = flask.Flask(__name__, static_folder='./utils/static',
     template_folder='./utils/templates')
+
 
 #FOOSBALL_APP.config['DEBUG'] = True
 
@@ -178,19 +180,19 @@ def add_team():
                 member_one=final_member_one, member_two=final_member_two)
             FOOSBALL_DATA.commit_data()
         except data_manager_exceptions.DBValueError as error:
-            LOGGER.error(error.msg)
+            data_manager.LOGGER.error(error.msg)
             return flask.render_template('addteam.html', error=error,
                 players=players)
         except data_manager_exceptions.DBSyntaxError as error:
-            LOGGER.error(error.msg)
+            data_manager.LOGGER.error(error.msg)
             return flask.render_template('addteam.html', error=error,
                 players=players)
         except data_manager_exceptions.DBConnectionError as error:
-            LOGGER.error(error.msg)
+            data_manager.LOGGER.error(error.msg)
             return flask.render_template('addteam.html', error=error,
                 players=players)
         except data_manager_exceptions.DBExistError as error:
-            LOGGER.error(error.msg)
+            data_manager.LOGGER.error(error.msg)
             return flask.render_template('addteam.html', error=error,
                 players=players)
         else:
@@ -233,16 +235,16 @@ def add_player():
                 last_name=last_name, nickname=nickname)
             FOOSBALL_DATA.commit_data()
         except data_manager_exceptions.DBValueError as error:
-            LOGGER.error(error.msg)
+            data_manager.LOGGER.error(error.msg)
             return flask.render_template('addplayer.html', error=error)
         except data_manager_exceptions.DBSyntaxError as error:
-            LOGGER.error(error.msg)
+            data_manager.LOGGER.error(error.msg)
             return flask.render_template('addplayer.html', error=error)
         except data_manager_exceptions.DBConnectionError as error:
-            LOGGER.error(error.msg)
+            data_manager.LOGGER.error(error.msg)
             return flask.render_template('addplayer.html', error=error)
         except data_manager_exceptions.DBExistError as error:
-            LOGGER.error(error.msg)
+            data_manager.LOGGER.error(error.msg)
             return flask.render_template('addplayer.html', error=error)
         else:
             pass
@@ -261,40 +263,49 @@ def add_player():
 def edit_player():
     """Edit an existing player name"""
     players = FOOSBALL_DATA.get_all_players()
+    data_manager.LOGGER.info(flask.request.method)
     if flask.request.method == 'POST':
-        previous_first_name = flask.request.form['previous_first_name'].encode('utf-8')
-        previous_last_name = flask.request.form['previous_last_name'].encode('utf-8')
-        previous_nickname = flask.request.form['previous_nickname'].encode('utf-8')
+        data_manager.LOGGER.info(flask.request.form)
+        previous_player = flask.request.form['previous_player'].encode('utf-8')
 
-        first_name = flask.request.form['first_name'].encode('utf-8')
-        last_name = flask.request.form['last_name'].encode('utf-8')
-        nickname = flask.request.form['nickname'].encode('utf-8')
+        first_quote = previous_player.find('"')
+        second_quote = previous_player.find('"', first_quote + 1)
+        previous_player = (previous_player[:first_quote - 1],
+            previous_player[second_quote + 2:],
+            previous_player[first_quote + 1:second_quote])
 
+        # first_name = flask.request.form['first_name'].encode('utf-8')
+        # last_name = flask.request.form['last_name'].encode('utf-8')
+        # nickname = flask.request.form['nickname'].encode('utf-8')
+        previous_player = {'previous_first_name': previous_player[0],
+                           'previous_last_name': previous_player[1],
+                           'previous_nickname': previous_player[2]}
+        new = {'first_name': flask.request.form['first_name'].encode('utf-8'),
+               'last_name': flask.request.form['last_name'].encode('utf-8'),
+               'nickname': flask.request.form['nickname'].encode('utf-8')}
+        #new = (first_name, last_name, nickname)
+        data_manager.LOGGER.info(previous_player)
+        data_manager.LOGGER.info(new)
         try:
-            FOOSBALL_DATA.edit_player(previous_first_name,
-                                      previous_last_name,
-                                      previous_nickname,
-                                      first_name,
-                                      last_name,
-                                      nickname)
+            FOOSBALL_DATA.edit_player(previous_player, new)
 
             FOOSBALL_DATA.commit_data()
         except data_manager_exceptions.DBValueError as error:
-            LOGGER.error(error.msg)
+            data_manager.LOGGER.error(error.msg)
             return flask.render_template('editplayer.html', error=error)
         except data_manager_exceptions.DBSyntaxError as error:
-            LOGGER.error(error.msg)
+            data_manager.LOGGER.error(error.msg)
             return flask.render_template('editplayer.html', error=error)
         except data_manager_exceptions.DBConnectionError as error:
-            LOGGER.error(error.msg)
+            data_manager.LOGGER.error(error.msg)
             return flask.render_template('editplayer.html', error=error)
         except data_manager_exceptions.DBExistError as error:
-            LOGGER.error(error.msg)
+            data_manager.LOGGER.error(error.msg)
             return flask.render_template('editplayer.html', error=error)
         else:
             pass
 
-        message = 'Player successfully added'
+        message = 'Player successfully edited'
         players = FOOSBALL_DATA.get_all_players()
         return flask.render_template('editplayer.html', message=message,
             players=players)
@@ -332,16 +343,16 @@ def del_player():
                 last_name=last_name, nickname=nickname)
             FOOSBALL_DATA.commit_data()
         except data_manager_exceptions.DBValueError as error:
-            LOGGER.error(error.msg)
+            data_manager.LOGGER.error(error.msg)
             return flask.render_template('player.html', error=error)
         except data_manager_exceptions.DBSyntaxError as error:
-            LOGGER.error(error.msg)
+            data_manager.LOGGER.error(error.msg)
             return flask.render_template('player.html', error=error)
         except data_manager_exceptions.DBConnectionError as error:
-            LOGGER.error(error.msg)
+            data_manager.LOGGER.error(error.msg)
             return flask.render_template('player.html', error=error)
         except data_manager_exceptions.DBExistError as error:
-            LOGGER.error(error.msg)
+            data_manager.LOGGER.error(error.msg)
             return flask.render_template('player.html', error=error)
         else:
             pass
@@ -412,19 +423,19 @@ def add_result():
                 defense_loser=final_defense_loser)
             FOOSBALL_DATA.commit_data()
         except data_manager_exceptions.DBValueError as error:
-            LOGGER.error(error.msg)
+            data_manager.LOGGER.error(error.msg)
             return flask.render_template('addresult.html', error=error,
                 players=players)
         except data_manager_exceptions.DBSyntaxError as error:
-            LOGGER.error(error.msg)
+            data_manager.LOGGER.error(error.msg)
             return flask.render_template('addresult.html', error=error,
                 players=players)
         except data_manager_exceptions.DBConnectionError as error:
-            LOGGER.error(error.msg)
+            data_manager.LOGGER.error(error.msg)
             return flask.render_template('addresult.html', error=error,
                 players=players)
         except data_manager_exceptions.DBExistError as error:
-            LOGGER.error(error.msg)
+            data_manager.LOGGER.error(error.msg)
             return flask.render_template('addresult.html', error=error,
                 players=players)
         else:

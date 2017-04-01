@@ -441,43 +441,35 @@ to MySQL server")
         else:
             pass
 
-    def edit_player(self, previous_first_name,
-                          previous_last_name,
-                          previous_nickname,
-                          first_name,
-                          last_name,
-                          nickname):
+    def edit_player(self, previous_player, new):
         """TODO"""
-        if len(first_name) is 0:
+        if len(new['first_name']) is 0:
             raise data_manager_exceptions.DBValueError("First name must be at \
 least one character")
 
-        if len(last_name) is 0:
+        if len(new['last_name']) is 0:
             raise data_manager_exceptions.DBValueError("Last name must be at \
 least one character")
 
-        if not self.check_if_player_exists(first_name=first_name,
-            last_name=last_name, nickname=nickname):
-            raise data_manager_exceptions.DBExistError("Name already \
+        if not self.check_if_player_exists(**new):
+            raise data_manager_exceptions.DBExistError("Name you are trying to change to already \
 exists in database")
 
         self.check_if_db_connected()
         cursor = self.db_conn.cursor()
         LOGGER.info('Editing player')
 
+        sql_params = dict(previous_player.items() + new.items())
+        sql = """UPDATE player
+                 SET first_name='{first_name}',
+                     last_name='{last_name}',
+                     nickname='{nickname}'
+                 WHERE first_name='{previous_first_name}' AND
+                       last_name='{previous_last_name}' AND
+                       nickname='{previous_nickname}';""".format(**sql_params)
+        LOGGER.info(sql)
         try:
-            cursor.execute("""UPDATE player
-                              SET first_name='{first_name}',
-                                  last_name='{last_name}',
-                                  nickname='{nickname}'
-                              WHERE first_name='{previous_first_name}',
-                                    last_name='{previous_last_name}',
-                                    nickname='{previous_nickname}';""".format(first_name=first_name,
-                                                                             last_name=last_name,
-                                                                             nickname=nickname,
-                                                                             previous_first_name=previous_first_name,
-                                                                             previous_last_name=previous_last_name,
-                                                                             previous_nickname=previous_nickname))
+            cursor.execute(sql)
         except MySQLdb.OperationalError:
             LOGGER.error("MySQL operational error occured")
             traceback.print_exc()
