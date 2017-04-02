@@ -1,0 +1,109 @@
+{% extends "layout.html" %}
+{% block body %}
+    <div id="wrapper">
+
+        <!-- Navigation -->
+        <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="{{ url_for('index') }}">Foosball</a>
+            </div>
+            
+            <!-- Sidebar Menu Items - These collapse to the responsive navigation menu on small screens -->
+            <div class="collapse navbar-collapse navbar-ex1-collapse">
+                <ul class="nav navbar-nav side-nav">
+                    <li>
+                        <a href="{{ url_for('index') }}"><i class="fa fa-fw fa-dashboard"></i> Dashboard</a>
+                    </li>
+                    <li class="active">
+                        <a href="{{ url_for('player') }}"><i class="fa fa-fw fa-user"></i> Players</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('team') }}"><i class="fa fa-fw fa-users"></i> Teams</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('result') }}"><i class="fa fa-fw fa-desktop"></i> Results</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('team_stat') }}"><i class="fa fa-fw fa-bar-chart-o"></i> Team Statistics</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('player_stat') }}"><i class="fa fa-fw fa-area-chart"></i> Player Statistics</a>
+                    </li>
+                </ul>
+            </div>
+            <!-- /.navbar-collapse -->
+        </nav>
+
+        <div id="page-wrapper">
+
+            <div class="container-fluid">
+
+                <!-- Page Heading -->
+                <div class="row">
+                    <div class="col-lg-12">
+                        <h1 class="page-header">
+                            Edit Player
+                        </h1>
+                    </div>
+                </div>
+                <!-- /.row -->
+
+                {% if error %}
+
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="alert alert-danger alert-dismissable">
+                            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+                                {{ error }}
+                        </div>
+                    </div>
+                </div>
+                <!-- /.row -->
+
+                {% endif %}
+
+                <div class="row">
+                    <div class="col-lg-4">
+                        <form action="{{ url_for('edit_player') }}" method="POST" class="form">
+                            <div class="form-group">
+                                <label for="all_players">Players</label>
+                                <select class="form-control" id="previous_player" name="previous_player">
+                                    {% for first_name, last_name, nickname in players %}
+                                    <option>{{ first_name }} "{{ nickname }}" {{ last_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="first_name">New First Name</label>
+                                <input type="text" class="form-control" id="first_name" name="first_name" placeholder="{{ first_name }}">
+                            </div>
+                            <div class="form-group">
+                                <label for="last_name">New Last Name</label>
+                                <input type="text" class="form-control" id="last_name" name="last_name" placeholder="{{ last_name }}">
+                            </div>
+                            <div class="form-group">
+                                <label for="nickname">New Nickname</label>
+                                <input type="text" class="form-control" id="nickname" name="nickname" placeholder="{{ nickname }}">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                        </form>
+                    </div>
+                </div>
+                <!-- /.row -->
+
+            </div>
+            <!-- /.container-fluid -->
+
+        </div>
+        <!-- /#page-wrapper -->
+
+    </div>
+    <!-- /#wrapper -->
+{% endblock %}
