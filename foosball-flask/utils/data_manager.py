@@ -441,9 +441,48 @@ to MySQL server")
         else:
             pass
 
-    def edit_player(self):
+    def edit_player(self, previous_player, new):
         """TODO"""
+        if len(new['first_name']) is 0:
+            raise data_manager_exceptions.DBValueError("First name must be at \
+least one character")
 
+        if len(new['last_name']) is 0:
+            raise data_manager_exceptions.DBValueError("Last name must be at \
+least one character")
+
+        if not self.check_if_player_exists(**new):
+            raise data_manager_exceptions.DBExistError("Name you are trying to change to already \
+exists in database")
+
+        self.check_if_db_connected()
+        cursor = self.db_conn.cursor()
+        LOGGER.info('Editing player')
+
+        sql_params = dict(previous_player.items() + new.items())
+        sql = """UPDATE player
+                 SET first_name='{first_name}',
+                     last_name='{last_name}',
+                     nickname='{nickname}'
+                 WHERE first_name='{previous_first_name}' AND
+                       last_name='{previous_last_name}' AND
+                       nickname='{previous_nickname}';""".format(**sql_params)
+        LOGGER.info(sql)
+        try:
+            cursor.execute(sql)
+        except MySQLdb.OperationalError:
+            LOGGER.error("MySQL operational error occured")
+            traceback.print_exc()
+            raise data_manager_exceptions.DBConnectionError("Cannot connect \
+to MySQL server")
+
+        except MySQLdb.ProgrammingError:
+            LOGGER.error("MySQL programming error")
+            traceback.print_exc()
+            raise data_manager_exceptions.DBSyntaxError("MySQL syntax error")
+
+        else:
+            pass
     def delete_player(self, first_name, last_name, nickname):
         """TODO"""
         """Method to delete a player from the database
