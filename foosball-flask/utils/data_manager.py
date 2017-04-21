@@ -1072,6 +1072,103 @@ to MySQL server")
         else:
             return all_results
 
+    def get_individual_results(self, player, position):
+        """Method to get individual's results from database
+
+        Args:
+            player (tup):   player names
+            position (str): player position
+
+        Raises:
+            data_manager_exceptions.DBConnectionError
+            data_manager_exceptions.DBSyntaxError
+
+        """
+
+        if len(player) != 3:
+            raise data_manager_exceptions.DBValueError("Player must\
+ be complete")
+
+        individual_results = ()
+
+        try:
+            LOGGER.info("Getting individual result list")
+            self.check_if_db_connected()
+            cursor = self.db_conn.cursor()
+            cursor.execute("SELECT player_id FROM player WHERE \
+first_name = '{0}' AND last_name = '{1}' AND nickname = \
+'{2}'".format(player[0], player[1], player[2]))
+            player_id = cursor.fetchone()[0]
+
+            if position == 'Offense':
+                cursor.execute("SELECT offense_winner, defense_winner, \
+offense_loser, defense_loser, time FROM result WHERE offense_winner = {0} \
+OR offense_loser = {0} ORDER BY time DESC".format(player_id))
+                results = cursor.fetchall()
+            elif position == 'Defense':
+                cursor.execute("SELECT offense_winner, defense_winner, \
+offense_loser, defense_loser, time FROM result WHERE defense_winner = {0} \
+OR defense_loser = {0} ORDER BY time DESC".format(player_id))
+                results = cursor.fetchall()
+            else:
+                raise data_manager_exceptions.DBValueError("Unrecognized\
+position")
+
+            for offense_winner_id, defense_winner_id, offense_loser_id, \
+                defense_loser_id, time in results:
+
+                intermediate_results = ()
+                cursor.execute("SELECT first_name, last_name, nickname FROM \
+player WHERE player_id = {0}".format(offense_winner_id))
+                offense_winner = cursor.fetchall()
+                first_name_offense_winner, last_name_offense_winner, \
+                    nickname_offense_winner = offense_winner[0]
+
+                cursor.execute("SELECT first_name, last_name, nickname FROM \
+player WHERE player_id = {0}".format(defense_winner_id))
+                defense_winner = cursor.fetchall()
+                first_name_defense_winner, last_name_defense_winner, \
+                    nickname_defense_winner = defense_winner[0]
+
+                cursor.execute("SELECT first_name, last_name, nickname FROM \
+player WHERE player_id = {0}".format(offense_loser_id))
+                offense_loser = cursor.fetchall()
+                first_name_offense_loser, last_name_offense_loser, \
+                    nickname_offense_loser = offense_loser[0]
+
+                cursor.execute("SELECT first_name, last_name, nickname FROM \
+player WHERE player_id = {0}".format(defense_loser_id))
+                defense_loser = cursor.fetchall()
+                first_name_defense_loser, last_name_defense_loser, \
+                    nickname_defense_loser = defense_loser[0]
+
+                intermediate_results = intermediate_results + \
+                    (first_name_offense_winner, last_name_offense_winner,
+                    nickname_offense_winner, first_name_defense_winner,
+                    last_name_defense_winner, nickname_defense_winner,
+                    first_name_offense_loser, last_name_offense_loser,
+                    nickname_offense_loser, first_name_defense_loser,
+                    last_name_defense_loser, nickname_defense_loser,
+                    time.strftime('%Y-%m-%d'))
+
+                individual_results = individual_results + \
+                    (intermediate_results,)
+                del intermediate_results
+
+        except MySQLdb.OperationalError:
+            LOGGER.error("MySQL operational error occured")
+            traceback.print_exc()
+            raise data_manager_exceptions.DBConnectionError("Cannot connect \
+to MySQL server")
+
+        except MySQLdb.ProgrammingError:
+            LOGGER.error("MySQL programming error")
+            traceback.print_exc()
+            raise data_manager_exceptions.DBSyntaxError("MySQL syntax error")
+
+        else:
+            return individual_results
+
     def get_team_rankings(self):
         """Method to get team rankings from database
 
