@@ -416,7 +416,7 @@ def team_stat():
         team_count=team_count, result_count=result_count,
         individual_ranks=individual_ranks, team_ranks=team_ranks)
 
-@FOOSBALL_APP.route('/playerstat')
+@FOOSBALL_APP.route('/playerstat', methods=['GET', 'POST'])
 def player_stat():
     """Player Stat webpage
 
@@ -428,19 +428,49 @@ def player_stat():
 
     """
 
-    player_count = FOOSBALL_DATA.get_total_players()
-    team_count = FOOSBALL_DATA.get_total_teams()
-    result_count = FOOSBALL_DATA.get_total_results()
-    individual_ranks = FOOSBALL_DATA.get_individual_rankings()
-    individual_ranks = sorted(individual_ranks, key=lambda tup: tup[4],
-        reverse=True)
-    team_ranks = FOOSBALL_DATA.get_team_rankings()
-    team_ranks = sorted(team_ranks, key=lambda tup: tup[1],
-        reverse=True)
+    players = FOOSBALL_DATA.get_all_players()
+    results = FOOSBALL_DATA.get_all_results()
 
-    return flask.render_template('dashboard.html', player_count=player_count,
-        team_count=team_count, result_count=result_count,
-        individual_ranks=individual_ranks, team_ranks=team_ranks)
+    if flask.request.method == 'POST':
+        selected_player = flask.request.form['player'].encode('utf-8')
+        selected_position = flask.request.form['position'].encode('utf-8')
+
+        first_quote = selected_player.find('"')
+        second_quote = selected_player.find('"', first_quote + 1)
+        final_player = (selected_player[:first_quote - 1],
+            selected_player[second_quote + 2:],
+            selected_player[first_quote + 1:second_quote])
+
+        try:
+            individual_results = FOOSBALL_DATA.get_individual_results(
+                player=final_player, position=selected_position)
+        except data_manager_exceptions.DBValueError as error:
+            LOGGER.error(error.msg)
+            return flask.render_template('playerstat.html', error=error,
+                players=players, results=results)
+        except data_manager_exceptions.DBSyntaxError as error:
+            LOGGER.error(error.msg)
+            return flask.render_template('playerstat.html', error=error,
+                players=players, results=results)
+        except data_manager_exceptions.DBConnectionError as error:
+            LOGGER.error(error.msg)
+            return flask.render_template('playerstat.html', error=error,
+                players=players, results=results)
+        except data_manager_exceptions.DBExistError as error:
+            LOGGER.error(error.msg)
+            return flask.render_template('playerstat.html', error=error,
+                players=players, results=results)
+        else:
+            pass
+
+        return flask.render_template('playerstat.html',
+            results=individual_results,
+            players=players)
+    elif flask.request.method == 'GET':
+        return flask.render_template('playerstat.html', results=results,
+            players=players)
+    else:
+        raise foosball_exceptions.HTTPError("Received unrecognized HTTP method")
 
 def main():
     """Main entry point
