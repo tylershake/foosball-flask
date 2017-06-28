@@ -1,7 +1,44 @@
 {% extends "layout.html" %}
 {% block body %}
     <div id="wrapper">
-
+        <!-- Navigation -->
+        <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="{{ url_for('index') }}">Foosball</a>
+            </div>
+            
+            <!-- Sidebar Menu Items - These collapse to the responsive navigation menu on small screens -->
+            <div class="collapse navbar-collapse navbar-ex1-collapse">
+                <ul class="nav navbar-nav side-nav">
+                    <li>
+                        <a href="{{ url_for('index') }}"><i class="fa fa-fw fa-dashboard"></i> Dashboard</a>
+                    </li>
+                    <li class="active">
+                        <a href="{{ url_for('player') }}"><i class="fa fa-fw fa-user"></i> Players</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('team') }}"><i class="fa fa-fw fa-users"></i> Teams</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('result') }}"><i class="fa fa-fw fa-desktop"></i> Results</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('team_stat') }}"><i class="fa fa-fw fa-bar-chart-o"></i> Team Statistics</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('player_stat') }}"><i class="fa fa-fw fa-area-chart"></i> Player Statistics</a>
+                    </li>
+                </ul>
+            </div>
+            <!-- /.navbar-collapse -->
+        </nav>
 
         <div id="page-wrapper">
 
