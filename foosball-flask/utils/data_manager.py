@@ -956,24 +956,32 @@ WHERE first_name = '{0}' AND last_name = '{1}' AND nickname = '{2}'".format(
             new_rating_id = cursor.lastrowid
             cursor.execute("UPDATE player set offense_rating = {0} where \
 player_id = {1}".format(new_rating_id, offense_winner_player_id))
+            cursor.execute("INSERT INTO off_rating_hist (rating, player) VALUES ({0}, {1}\
+)".format(new_rating_id, offense_winner_player_id))
 
             cursor.execute("INSERT INTO rating (mu, sigma) VALUES ({0}, {1}\
 )".format(new_defense_winner_rating.mu, new_defense_winner_rating.sigma))
             new_rating_id = cursor.lastrowid
             cursor.execute("UPDATE player set defense_rating = {0} where \
 player_id = {1}".format(new_rating_id, defense_winner_player_id))
+            cursor.execute("INSERT INTO def_rating_hist (rating, player) VALUES ({0}, {1}\
+)".format(new_rating_id, defense_winner_player_id))
 
             cursor.execute("INSERT INTO rating (mu, sigma) VALUES ({0}, {1}\
 )".format(new_offense_loser_rating.mu, new_offense_loser_rating.sigma))
             new_rating_id = cursor.lastrowid
             cursor.execute("UPDATE player set offense_rating = {0} where \
 player_id = {1}".format(new_rating_id, offense_loser_player_id))
+            cursor.execute("INSERT INTO off_rating_hist (rating, player) VALUES ({0}, {1}\
+)".format(new_rating_id, offense_loser_player_id))
 
             cursor.execute("INSERT INTO rating (mu, sigma) VALUES ({0}, {1}\
 )".format(new_defense_loser_rating.mu, new_defense_loser_rating.sigma))
             new_rating_id = cursor.lastrowid
             cursor.execute("UPDATE player set defense_rating = {0} where \
 player_id = {1}".format(new_rating_id, defense_loser_player_id))
+            cursor.execute("INSERT INTO def_rating_hist (rating, player) VALUES ({0}, {1}\
+)".format(new_rating_id, defense_loser_player_id))
 
             # team ratings
             LOGGER.info("Updating team ratings")
@@ -1029,12 +1037,16 @@ player_id = {1}".format(new_rating_id, defense_loser_player_id))
             new_rating_id = cursor.lastrowid
             cursor.execute("UPDATE team SET rating = {0} where \
 team_id = {1}".format(new_rating_id, winning_team))
+            cursor.execute("INSERT INTO team_rating_hist (rating, team) VALUES ({0}, {1}\
+)".format(new_rating_id, winning_team))
 
             cursor.execute("INSERT INTO rating (mu, sigma) VALUES ({0}, {1}\
 )".format(new_losing_team_rating.mu, new_losing_team_rating.sigma))
             new_rating_id = cursor.lastrowid
             cursor.execute("UPDATE team SET rating = {0} where \
 team_id = {1}".format(new_rating_id, losing_team))
+            cursor.execute("INSERT INTO team_rating_hist (rating, team) VALUES ({0}, {1}\
+)".format(new_rating_id, losing_team))
 
         except MySQLdb.OperationalError:
             LOGGER.error("MySQL operational error occured")
