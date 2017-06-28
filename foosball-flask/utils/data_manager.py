@@ -164,6 +164,57 @@ REFERENCES player (player_id) \
 ON DELETE NO ACTION \
 ON UPDATE NO ACTION)")
 
+            cursor.execute("CREATE TABLE IF NOT EXISTS team_rating_hist (\
+rating INT NOT NULL,\
+team INT NOT NULL,\
+time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\
+INDEX rating_idx (rating ASC),\
+INDEX team_idx (team ASC),\
+CONSTRAINT rating \
+FOREIGN KEY (rating) \
+REFERENCES rating (rating_id) \
+ON DELETE NO ACTION \
+ON UPDATE NO ACTION,\
+CONSTRAINT team \
+FOREIGN KEY (team) \
+REFERENCES team (team_id) \
+ON DELETE NO ACTION \
+ON UPDATE NO ACTION)")
+
+            cursor.execute("CREATE TABLE IF NOT EXISTS off_rating_hist (\
+rating INT NOT NULL,\
+player INT NOT NULL,\
+time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\
+INDEX rating_idx (rating ASC),\
+INDEX player_idx (player ASC),\
+CONSTRAINT rating \
+FOREIGN KEY (rating) \
+REFERENCES rating (rating_id) \
+ON DELETE NO ACTION \
+ON UPDATE NO ACTION,\
+CONSTRAINT player \
+FOREIGN KEY (player) \
+REFERENCES player (player_id) \
+ON DELETE NO ACTION \
+ON UPDATE NO ACTION)")
+
+            cursor.execute("CREATE TABLE IF NOT EXISTS def_rating_hist (\
+rating INT NOT NULL,\
+player INT NOT NULL,\
+time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\
+INDEX rating_idx (rating ASC),\
+INDEX player_idx (player ASC),\
+CONSTRAINT rating \
+FOREIGN KEY (rating) \
+REFERENCES rating (rating_id) \
+ON DELETE NO ACTION \
+ON UPDATE NO ACTION,\
+CONSTRAINT player \
+FOREIGN KEY (player) \
+REFERENCES player (player_id) \
+ON DELETE NO ACTION \
+ON UPDATE NO ACTION)")
+
         except MySQLdb.OperationalError:
             LOGGER.error("MySQL operational error occured")
             traceback.print_exc()
