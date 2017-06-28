@@ -170,12 +170,12 @@ team INT NOT NULL,\
 time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\
 INDEX rating_idx (rating ASC),\
 INDEX team_idx (team ASC),\
-CONSTRAINT rating \
+CONSTRAINT rating_team \
 FOREIGN KEY (rating) \
 REFERENCES rating (rating_id) \
 ON DELETE NO ACTION \
 ON UPDATE NO ACTION,\
-CONSTRAINT team \
+CONSTRAINT team_hist \
 FOREIGN KEY (team) \
 REFERENCES team (team_id) \
 ON DELETE NO ACTION \
@@ -187,12 +187,12 @@ player INT NOT NULL,\
 time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\
 INDEX rating_idx (rating ASC),\
 INDEX player_idx (player ASC),\
-CONSTRAINT rating \
+CONSTRAINT rating_off \
 FOREIGN KEY (rating) \
 REFERENCES rating (rating_id) \
 ON DELETE NO ACTION \
 ON UPDATE NO ACTION,\
-CONSTRAINT player \
+CONSTRAINT player_ohist \
 FOREIGN KEY (player) \
 REFERENCES player (player_id) \
 ON DELETE NO ACTION \
@@ -204,12 +204,12 @@ player INT NOT NULL,\
 time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\
 INDEX rating_idx (rating ASC),\
 INDEX player_idx (player ASC),\
-CONSTRAINT rating \
+CONSTRAINT rating_def \
 FOREIGN KEY (rating) \
 REFERENCES rating (rating_id) \
 ON DELETE NO ACTION \
 ON UPDATE NO ACTION,\
-CONSTRAINT player \
+CONSTRAINT player_dhist \
 FOREIGN KEY (player) \
 REFERENCES player (player_id) \
 ON DELETE NO ACTION \
@@ -1098,7 +1098,7 @@ to MySQL server")
         else:
             return count
 
-    def get_all_results(self):
+    def get_all_results(self, quantity):
         """Method to get all results from database
 
         Args:
@@ -1117,7 +1117,7 @@ to MySQL server")
             self.check_if_db_connected()
             cursor = self.db_conn.cursor()
             cursor.execute("SELECT offense_winner, defense_winner, \
-offense_loser, defense_loser, time FROM result ORDER BY time DESC")
+offense_loser, defense_loser, time FROM result ORDER BY time DESC LIMIT {0}".format(quantity))
             results = cursor.fetchall()
 
             for offense_winner_id, defense_winner_id, offense_loser_id, \
@@ -1334,6 +1334,65 @@ AND defense_loser = {0})".format(player_one[0], player_two[0]))
                 intermediate_rank = (team_name, round(team_rank, 4),
                     team_win_count, team_loss_count, player_one_name,
                     player_two_name)
+                ranks.append(intermediate_rank)
+                del intermediate_rank
+
+        except MySQLdb.OperationalError:
+            LOGGER.error("MySQL operational error occured")
+            traceback.print_exc()
+            raise data_manager_exceptions.DBConnectionError("Cannot connect \
+to MySQL server")
+
+        except MySQLdb.ProgrammingError:
+            LOGGER.error("MySQL programming error")
+            traceback.print_exc()
+            raise data_manager_exceptions.DBSyntaxError("MySQL syntax error")
+
+        else:
+            return ranks
+
+    def get_player_rankings_hist(self, player, position):
+        """Method to get individual player ranking history from database
+
+        Args:
+
+        Returns:
+
+        """
+
+        if len(player) != 3:
+                    raise data_manager_exceptions.DBValueError("Player must\
+         be complete")
+        ranks = []
+
+        try:
+            LOGGER.info("Getting individual rankings histor")
+            self.check_if_db_connected()
+            cursor = self.db_conn.cursor()
+            cursor.execute("SELECT player_id FROM player WHERE \
+first_name = '{0}' AND last_name = '{1}' AND nickname = \
+'{2}'".format(player[0], player[1], player[2]))
+            player_id = cursor.fetchone()[0]
+
+            if position == 'Offense':
+                cursor.execute("SELECT rating, time FROM off_rating_hist \
+WHERE player = {0} ORDER BY time DESC".format(player_id))
+                results = cursor.fetchall()
+            elif position == 'Defense':
+                cursor.execute("SELECT rating, time FROM def_rating_hist \
+WHERE player = {0} ORDER BY time DESC".format(player_id))
+                results = cursor.fetchall()
+            else:
+                raise data_manager_exceptions.DBValueError("Unrecognized\
+position")
+
+            for rating, time in results:
+
+                cursor.execute("SELECT mu, sigma FROM rating WHERE rating_id \
+= {0}".format(rating))
+                mu, sigma = cursor.fetchall()[0]
+                rank = float(mu) - (3 * float(sigma))
+                intermediate_rank = (round(rank, 4), time)
                 ranks.append(intermediate_rank)
                 del intermediate_rank
 

@@ -12,6 +12,8 @@ from pprint import pprint
 import traceback
 import sys
 import time
+import plotly
+import plotly.graph_objs
 
 import utils.data_manager as data_manager
 import utils.data_manager_exceptions as data_manager_exceptions
@@ -102,7 +104,7 @@ def result():
 
     """
 
-    results = FOOSBALL_DATA.get_all_results()
+    results = FOOSBALL_DATA.get_all_results(100)
 
     return flask.render_template('result.html', results=results)
 
@@ -442,7 +444,7 @@ def add_result():
             pass
 
         message = 'Result successfully added'
-        results = FOOSBALL_DATA.get_all_results()
+        results = FOOSBALL_DATA.get_all_results(100)
         return flask.render_template('result.html', message=message,
             results=results)
     elif flask.request.method == 'GET':
@@ -489,7 +491,7 @@ def player_stat():
     """
 
     players = FOOSBALL_DATA.get_all_players()
-    results = FOOSBALL_DATA.get_all_results()
+    results = FOOSBALL_DATA.get_all_results(100)
 
     if flask.request.method == 'POST':
         selected_player = flask.request.form['player'].encode('utf-8')
@@ -504,31 +506,77 @@ def player_stat():
         try:
             individual_results = FOOSBALL_DATA.get_individual_results(
                 player=final_player, position=selected_position)
+            rank_history = FOOSBALL_DATA.get_player_rankings_hist(
+                player=final_player, position=selected_position)
         except data_manager_exceptions.DBValueError as error:
-            LOGGER.error(error.msg)
+            data_manager.LOGGER.error(error.msg)
             return flask.render_template('playerstat.html', error=error,
                 players=players, results=results)
         except data_manager_exceptions.DBSyntaxError as error:
-            LOGGER.error(error.msg)
+            data_manager.LOGGER.error(error.msg)
             return flask.render_template('playerstat.html', error=error,
                 players=players, results=results)
         except data_manager_exceptions.DBConnectionError as error:
-            LOGGER.error(error.msg)
+            data_manager.LOGGER.error(error.msg)
             return flask.render_template('playerstat.html', error=error,
                 players=players, results=results)
         except data_manager_exceptions.DBExistError as error:
-            LOGGER.error(error.msg)
+            data_manager.LOGGER.error(error.msg)
             return flask.render_template('playerstat.html', error=error,
                 players=players, results=results)
         else:
             pass
 
+        # generate plotly temp graph to pass to template
+
+        time_data = []
+        rank_data = []
+        for rating, date in rank_history:
+            time_data.append(date)
+            rank_data.append(rating * 100)
+
+        trace_one = plotly.graph_objs.Scatter(
+            x=time_data,
+            y=rank_data,
+            mode='lines',
+            name='Rating')
+        #trace_two = plotly.graph_objs.Scatter(
+        #    x=self.analytic_obj.get_concatenated_time_data(),
+        #    y=self.analytic_obj.get_concatenated_imag_data(),
+        #    mode='lines',
+        #    name='Q')
+        data = [trace_one]
+        layout = {
+            'title': "RatingvsTime",
+            'xaxis': {
+                'title': "Time",
+            },
+            'yaxis': {
+                'title': "Rating",
+            },
+        }
+        figure = {
+            'data': data,
+            'layout': layout,
+        }
+        plotly.offline.plot(figure, filename="./temp.html",
+                auto_open=False)
+        with open('./temp.html', 'r') as myfile:
+            data = myfile.read().replace('\n', '')
+
+        first_body = data.find("<body>")
+        first_body = first_body + 6
+        data = data[first_body:]
+        last_body = data.find("</body>")
+        data = data[:last_body]
+
         return flask.render_template('playerstat.html',
             results=individual_results,
-            players=players)
+            players=players,
+            rank_history=data)
     elif flask.request.method == 'GET':
         return flask.render_template('playerstat.html', results=results,
-            players=players)
+            players=players, rank_history=None)
     else:
         raise foosball_exceptions.HTTPError("Received unrecognized HTTP method")
 

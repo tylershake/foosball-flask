@@ -9,6 +9,8 @@ RUN pip install trueskill
 
 RUN pip install mysql-python
 
+RUN pip install plotly
+
 COPY . /app
 
 WORKDIR /app
