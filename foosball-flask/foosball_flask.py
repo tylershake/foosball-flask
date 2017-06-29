@@ -504,10 +504,20 @@ def player_stat():
             selected_player[first_quote + 1:second_quote])
 
         try:
-            individual_results = FOOSBALL_DATA.get_individual_results(
-                player=final_player, position=selected_position)
-            rank_history = FOOSBALL_DATA.get_player_rankings_hist(
-                player=final_player, position=selected_position)
+            if selected_position == "Combined":
+                off_rank_history = FOOSBALL_DATA.get_player_rankings_hist(
+                    player=final_player, position="Offense")
+                def_rank_history = FOOSBALL_DATA.get_player_rankings_hist(
+                    player=final_player, position="Defense")
+                off_individual_results = FOOSBALL_DATA.get_individual_results(
+                    player=final_player, position="Offense")
+                def_individual_results = FOOSBALL_DATA.get_individual_results(
+                    player=final_player, position="Defense")
+            else:
+                individual_results = FOOSBALL_DATA.get_individual_results(
+                    player=final_player, position=selected_position)
+                rank_history = FOOSBALL_DATA.get_player_rankings_hist(
+                    player=final_player, position=selected_position)
         except data_manager_exceptions.DBValueError as error:
             data_manager.LOGGER.error(error.msg)
             return flask.render_template('playerstat.html', error=error,
@@ -529,25 +539,44 @@ def player_stat():
 
         # generate plotly temp graph to pass to template
 
-        time_data = []
-        rank_data = []
-        for rating, date in rank_history:
-            time_data.append(date)
-            rank_data.append(rating * 100)
+        if selected_position == "Combined":
+            off_rank_data = []
+            off_time_data = []
+            def_rank_data = []
+            def_time_data = []
+            for rating, date in off_rank_history:
+                off_time_data.append(date)
+                off_rank_data.append(rating * 100)
+            for rating, date in def_rank_history:
+                def_time_data.append(date)
+                def_rank_data.append(rating * 100)
+            trace_one = plotly.graph_objs.Scatter(
+                x=off_time_data,
+                y=off_rank_data,
+                mode='lines',
+                name='Offense Rating')
+            trace_two = plotly.graph_objs.Scatter(
+                x=def_time_data,
+                y=def_rank_data,
+                mode='lines',
+                name='Defense Rating')
+            data = [trace_one, trace_two]
+        else:
+            time_data = []
+            rank_data = []
+            for rating, date in rank_history:
+                time_data.append(date)
+                rank_data.append(rating * 100)
 
-        trace_one = plotly.graph_objs.Scatter(
-            x=time_data,
-            y=rank_data,
-            mode='lines',
-            name='Rating')
-        #trace_two = plotly.graph_objs.Scatter(
-        #    x=self.analytic_obj.get_concatenated_time_data(),
-        #    y=self.analytic_obj.get_concatenated_imag_data(),
-        #    mode='lines',
-        #    name='Q')
-        data = [trace_one]
+            trace_one = plotly.graph_objs.Scatter(
+                x=time_data,
+                y=rank_data,
+                mode='lines',
+                name='Rating')
+            data = [trace_one]
+
         layout = {
-            'title': "RatingvsTime",
+            'title': "Rating Over Time",
             'xaxis': {
                 'title': "Time",
             },
@@ -570,6 +599,8 @@ def player_stat():
         last_body = data.find("</body>")
         data = data[:last_body]
 
+        if selected_position == "Combined":
+            individual_results = off_individual_results + def_individual_results
         return flask.render_template('playerstat.html',
             results=individual_results,
             players=players,
